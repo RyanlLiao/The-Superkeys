@@ -13,12 +13,19 @@
     <div class="form-container">
         <h1>Signup</h1>
 
-        <form id="signupForm" method="POST" action="signupCheck.php">
+        <form id="signupForm">
+            
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required><br>
 
             <label for="surname">Surname:</label>
             <input type="text" id="surname" name="surname" required><br>
+
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br>
+
+            <label for="phone_number">Phone number:</label>
+            <input type="text" id="phone_number" name="phone_number" required><br>
 
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" required><br>
