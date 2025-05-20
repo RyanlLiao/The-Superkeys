@@ -94,14 +94,23 @@ class API
                 $statement->execute([":email" => $email]);
                 $query = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-                if(count($query) > 0)
-                    return $this->response ("Register", "HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
+                if (count($query) > 0)
+                    return $this->response("Register", "HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
                 $apikey = bin2hex(random_bytes(16));
-                return $this->response("Register", "HTTP/1.1 200 OK","success", "", ['apikey' => $apikey]);
-               // break;
+                return $this->response("Register", "HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
+
             case "Login":
-                break;
+                $email = $data["email"];
+                $password = $data["password"];
+
+                $empty = $email == "" || $password == "";
+                if ($empty) {
+                    return $this->response($type, "HTTP/1.1 400 Bad Request", "error", "Missing Credentials", null);
+                }
+
+                return $this->login($email, $password);
+
             case "Products":
                 break;
             case "Prices":
@@ -132,21 +141,34 @@ class API
         return true;
     }
 
-
-    /////ALL FUNCTION FROM THIS POINT ASSUME DATA HAS BEEN VALIDATED/////
-    public function typeHandler($data)
-    {
-        //this will call the correct handler function based on the type
-    }
-
-    //verifies that the apikey is valid
     private function checkApikey($apikey)
     {
     }
 
+    /////ALL FUNCTION FROM THIS POINT ASSUME DATA HAS BEEN VALIDATED/////
+
+    //verifies that the apikey is valid
+
+
     //logs in the passed in user   
     private function login($email, $password)
     {
+        $query = "SELECT api_key, salt, password,name FROM u24584585_user_info WHERE email = :email";
+        $statement = $this->connection->prepare($query);
+        $statement->bindParam(":email", $email);
+        $statement->execute();
+
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        if (count($result) == 0)
+            return $this->response("Login", "HTTP/1.1 404 NOT FOUND", "error", "Invalid credentials", null);
+       
+            $salt = $result["salt"];
+        $open = $password . $salt;
+        $safe = hash("sha256", $open);
+        if ($result["password"] != $safe)
+            return $this->response("Login", "HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
+
+        return $this->response("Login", "HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname'=> $result['name']]);
     }
 
     //adds a user to the database of registered users
@@ -247,8 +269,8 @@ class API
     {
     }
 
-
-
+    //to change the price of an item
+    private function updatePrice($apikey, $price, $retailer, $product, $date){}
 }
 
 
