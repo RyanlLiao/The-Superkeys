@@ -32,20 +32,20 @@ class API
     public function request($object, $request)
     {
         if ($request !== "POST")
-            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Invalid Request Type", null);
+            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Request Type", null);
 
         if (!$object)
-            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Null Object", null);
+            return $this->response("HTTP/1.1 400 Bad Request", "error", "Null Object", null);
 
         if (!isset($object['type']) && $object['type'] == "")
-            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
+            return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
 
         $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "Wishlist"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
-            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Unrecognised Post type", null);
+            return $this->response("HTTP/1.1 400 Bad Request", "error", "Unrecognised Post type", null);
 
         return true;
     }
@@ -69,7 +69,7 @@ class API
         //check api key 
 
         if (isset($data['apikey']) && !$this->checkApikey($data['apikey']))
-            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
 
         $type = $data['type'];
@@ -88,17 +88,20 @@ class API
                 $pass_check = preg_match('/^((?=.*\W)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])).{8,}$/', $password);
 
                 if ($empty || !$email_check || !$pass_check)
-                    return $this->response("Register", "HTTP/1.1 400 Bad Request", "error", "Missing or Invalid parameters", null);
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing or Invalid parameters", null);
 
-                $statement = $this->connection->prepare("SELECT * FROM u24584585_user_info WHERE email= :email");
-                $statement->execute([":email" => $email]);
-                $query = $statement->fetchAll(PDO::FETCH_ASSOC);
+                $statement = $this->connection->prepare("SELECT * FROM u24584585_user_info WHERE email= ?");
+                $statement->bind_param("s", $email);
+                $statement->execute();
 
-                if (count($query) > 0)
-                    return $this->response("Register", "HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
+                $result = $statement->get_result();
+                $result = $result->fetch_assoc();
+
+                if ($result)
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
                 $apikey = bin2hex(random_bytes(16));
-                return $this->response("Register", "HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
+                return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
 
             case "Login":
                 $email = $data["email"];
@@ -106,13 +109,23 @@ class API
 
                 $empty = $email == "" || $password == "";
                 if ($empty) {
-                    return $this->response($type, "HTTP/1.1 400 Bad Request", "error", "Missing Credentials", null);
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Credentials", null);
                 }
 
                 return $this->login($email, $password);
 
             case "Products":
-                break;
+                //return
+                $return = $data['return'];
+
+                if ($return == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                if ($return == "*" || is_array($return))
+                    return $this->getProducts($data);
+
+                return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Post Parameter", null);
+
             case "Prices":
                 break;
             case "Retailers":
@@ -141,58 +154,76 @@ class API
         return true;
     }
 
+    //verifies that the apikey is valid
     private function checkApikey($apikey)
     {
+        if (empty($apikey))
+            return false;
+
+        $statement = $this->connection->prepare("SELECT id FROM u24584585_user_info WHERE api_key = ?");
+        $statement->bind_param("s", $apikey);
+        $statement->execute();
+
+        $result = $statement->get_result();
+        $result = $result->fetch_assoc();
+
+        if ($result)
+            return true;
+
+        return false;
     }
 
     /////ALL FUNCTION FROM THIS POINT ASSUME DATA HAS BEEN VALIDATED/////
 
-    //verifies that the apikey is valid
-
-
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password,name FROM u24584585_user_info WHERE email = :email";
+        $query = "SELECT api_key, salt, password,name FROM u24584585_user_info WHERE email = ?";
         $statement = $this->connection->prepare($query);
-        $statement->bindParam(":email", $email);
+        $statement->bind_param("s", $email);
         $statement->execute();
 
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-        if (count($result) == 0)
-            return $this->response("Login", "HTTP/1.1 404 NOT FOUND", "error", "Invalid credentials", null);
-       
-            $salt = $result["salt"];
+        $result = $statement->get_result();
+        $result = $result->fetch_assoc();
+        if (!$result)
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid credentials", null);
+
+
+        $salt = $result["salt"];
         $open = $password . $salt;
         $safe = hash("sha256", $open);
         if ($result["password"] != $safe)
-            return $this->response("Login", "HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
+            return $this->response("HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
 
-        return $this->response("Login", "HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname'=> $result['name']]);
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname' => $result['name']]);
     }
 
     //adds a user to the database of registered users
-    private function signup($data, $apikey)
-    {
-        $FirstName = $data["FirstName"];
-        $LastName = $data["lastName"];
-        $email = $data["emial"];
-        $password = $data["password"];
-
-        $salt = bin2hex(random_bytes(6));
-        $hashed = hash("sha256", $password + $salt);
-
-        //return a response
-    }
 
     //this build the api response 
-    private function response($type, $header, $result, $message, $data)
+    private function response($header, $result, $message, $data)
     {
     }
 
     //this will get products from the database - only manager apikeys will be valid
-    private function getProducts($apikey)
+    private function getProducts($data)
     {
+        $return = $data["return"];
+
+        if ($return !== "*") {
+            foreach ($return as $id)
+                $id = (int) $id;
+        }
+
+        //where  statement
+        $where = $return == "*" ? "" : implode(",",$return); 
+
+        if(isset($data['order']))
+            $order = ($data['order'] === "ASC" || $data['order'] === "DESC") ? $data["order"] : "";
+
+        if(isset($data['search']))
+            $search = "";   //FINISH THISSSSS
+        
     }
 
     //this will add products to the table - only manager apikeys will be valid
@@ -270,7 +301,9 @@ class API
     }
 
     //to change the price of an item
-    private function updatePrice($apikey, $price, $retailer, $product, $date){}
+    private function updatePrice($apikey, $price, $retailer, $product, $date)
+    {
+    }
 }
 
 
