@@ -31,17 +31,105 @@ class API
     //this function will validate request types
     public function request($object, $request)
     {
+        if ($request !== "POST")
+            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Invalid Request Type", null);
+
+        if (!$object)
+            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Null Object", null);
+
+        if (!isset($object['type']) && $object['type'] == "")
+            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
+
+
+        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "Wishlist"];        //might add admin
+        $valid = $this->arrayCheck($object["type"], $types);
+
+        if (!$valid)
+            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Unrecognised Post type", null);
+
+        return true;
     }
 
     //this function will validate request data
     public function validate($data)
     {
-        //apikey and api endpoint validation
+        //clean data
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                foreach ($data[$key] as $innerkey => $innervalue) {
+                    if (is_string($innervalue))
+                        $data[$key][$innerkey] = htmlspecialchars(trim($innervalue));
+                }
+            } else {
+                if (is_string($value))
+                    $data[$key] = htmlspecialchars(trim($value));
+            }
+        }
+
+        //check api key 
+
+        if (isset($data['apikey']) && !$this->checkApikey($data['apikey']))
+            return $this->response(null, "HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+
+        $type = $data['type'];
+
+        switch ($type) {
+            case "Register":
+                $name = $data["name"];
+                $surname = $data["surname"];
+                $email = $data["email"];
+                $password = $data["password"];
+                $confirm = $data["password_confirm"];
+                $user = $data["user_type"];
+
+                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $confirm === "" || $user === "";
+                $email_check = preg_match('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/', $email);
+                $pass_check = preg_match('/^((?=.*\W)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])).{8,}$/', $password);
+
+                if ($empty || !$email_check || !$pass_check)
+                    return $this->response("Register", "HTTP/1.1 400 Bad Request", "error", "Missing or Invalid parameters", null);
+
+                $statement = $this->connection->prepare("SELECT * FROM u24584585_user_info WHERE email= :email");
+                $statement->execute([":email" => $email]);
+                $query = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+                if(count($query) > 0)
+                    return $this->response ("Register", "HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
+
+                $apikey = bin2hex(random_bytes(16));
+                return $this->response("Register", "HTTP/1.1 200 OK","success", "", ['apikey' => $apikey]);
+               // break;
+            case "Login":
+                break;
+            case "Products":
+                break;
+            case "Prices":
+                break;
+            case "Retailers":
+                break;
+            case "Reviews":
+                break;
+            case "Wishlist":
+                break;
+        }
+
     }
 
     //this function will check if the passed in paramater is an array of allowed values
     private function arrayCheck($param, $allowed)
     {
+        if ($param == null)
+            return false;
+
+        if (gettype($param) !== 'array')
+            $param = [$param];
+
+        $valid = array_intersect($allowed, $param);
+        if (sizeof($valid) <= 0)
+            return false;
+
+        return true;
     }
 
 
@@ -76,7 +164,7 @@ class API
     }
 
     //this build the api response 
-    private function response($type, $result, $message, $data)
+    private function response($type, $header, $result, $message, $data)
     {
     }
 

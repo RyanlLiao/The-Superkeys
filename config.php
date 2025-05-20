@@ -21,7 +21,7 @@ class Database {
         $this -> user = $_ENV['DB_USER'];
         $this -> password = $_ENV['DB_PASSWORD'];
 
-        $this -> mysqli = new mysqli($this -> host, $this -> user, $this -> pass, $this -> db);
+        $this -> mysqli = new mysqli($this -> host, $this -> user, $this -> password, $this -> db);
 
         if ($this -> mysqli -> connect_error) {
             die("Database connection failed: " . $this -> mysqli -> connect_error);
