@@ -217,6 +217,36 @@ class API
     }
 
     //adds a user to the database of registered users
+     private function addUser($firstname, $lastname, $email, $password, $phoneNum, $user, $username, $apikey)
+    {
+        $salty = bin2hex(random_bytes(6));
+        $open = $password . $salty;
+        $safe = hash("sha256", $open);
+
+
+        $insert = "INSERT INTO Person (first_names, last_name, email, phone_number,username, hashed_password, salt, api_key) 
+                    VALUES (?,?,?,?,?,?,?,?)";
+        $statement = $this->connection->prepare($insert);
+        $statement->bind_param("ssssssss", $firstname, $lastname, $email, $phoneNum, $username, $safe, $salty, $apikey);
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add user", null);
+
+        $added = $this->connection->insert_id;
+
+        if ($user === "Manager") {
+            $query = "INSERT INTO Manager (manager_id) VALUES(?)";
+            $statement = $this->connection->prepare($query);
+            $statement->bind_param("i", $added);
+        } else if ($user === "User") {
+            $query = "INSERT INTO User (user_id) VALUES(?)";
+            $statement = $this->connection->prepare($query);
+            $statement->bind_param("i", $added);
+        }
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add user", null);
+    }
 
     //this build the api response 
     private function response($header, $result, $message, $data)
