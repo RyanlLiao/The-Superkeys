@@ -1,0 +1,135 @@
+body {
+    background-color: #F7F7F3;
+    text-align: center;
+    margin: 5px;
+    padding: 0;
+}
+
+.headerrr {
+    background-color: #0B1957;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 50px;
+    border-bottom: 3px solid #F7F7F3;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.pLogo {
+    width: 250px;
+    height: auto;
+    border-radius: 5px;
+}
+
+.navBar {
+    background-color: transparent;
+    color: #F7F7F3;
+}
+
+.navBar ul {
+    list-style: none;
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+}
+
+.navBar ul li {
+    margin-left: 20px;
+}
+
+.navBar ul li a {
+    text-decoration: none;
+    color: #F7F7F3;
+    font-size: 18px;
+    padding: 10px 15px;
+    display: block;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.navBar ul li a:hover {
+    background-color: #00171F;
+}
+
+.products-filter {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    overflow-x: auto;
+    padding: 10px;
+    
+}
+
+.products-filter img {
+    height: 150px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.brands-filter {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: auto;
+    padding: 5px;
+    max-width: 60%;
+    margin: auto;
+    
+}
+
+.brands-filter img {
+    height: 80px;
+    width: auto;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.search-box {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    overflow: hidden;
+    width: 45%;
+}
+
+.search-box input[type="text"] {
+    flex: 1;
+    padding: 10px 15px;
+    border: none;
+    outline: none;
+}
+
+.search-box button {
+    background-color: #003459;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.search-box button:hover {
+    background-color: #00243D;
+}
+
+.search-box img{
+    width: 15px;
+}
