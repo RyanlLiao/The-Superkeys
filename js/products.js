@@ -61,7 +61,6 @@ function fetchProducts() {
     }
 
     var requestBody = {
-        //studentnum: s_num,
         apikey: a_key,
         type: "GetAllProducts",
         return: ["id", "brand", "title", "image_url", "department", "final_price", "country_of_origin", "date_first_available", "categories"],
