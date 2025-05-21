@@ -41,7 +41,7 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
+        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -129,6 +129,25 @@ class API
                 break;
             case "Reviews":
                 break;
+            case "AddComment":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+                $rid = $data['rid'];
+                $comment = $data['comment'];
+
+                if ($pid == "" || $rid == "" || $comment == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this -> addComment($apikey, $pid, $rid, $comment);
+            case "RemoveComment":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+                $rid = $data['rid'];
+
+                if ($pid == "" || $rid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this->removeComment($apikey, $pid, $rid);
             case "GetWishlist":
                 $apikey = $data['apikey'];
 
@@ -149,6 +168,17 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
 
                 return $this->removeWishlist($apikey, $pid);
+            case "UpdatePrice":
+                $apikey = $data['apikey'];
+                $price = $data['price'];
+                $retailer = $data['retailer'];
+                $product = $data['product'];
+                $date = date('Y-m-d H:i:s', strtotime($date));
+
+                if ($price == "" || $retailer == "" || $product == "" || $date == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this -> updatePrice($apikey, $price, $retailer, $product, $date);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
 
@@ -643,6 +673,44 @@ class API
     //to change the price of an item
     private function updatePrice($apikey, $price, $retailer, $product, $date)
     {
+        //manager apikey to change price
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt -> bind_result($managerID);
+        $pstmt -> fetch();
+        $query = "SELECT manager_id FROM Manager WHERE id = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $managerID);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid Manager ID", null);
+        }
+
+        $query = "INSERT INTO Price_History (product_id, retailer_id, timestamp, price) VALUES (?, ?, ?, ?)";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("iisd", $product, $retailer, $date, $price);
+        $pstmt -> execute();
+        if ($pstmt -> affected_rows == 0) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't update price", null);
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "Price updated successfully", null);
     }
 }
 
