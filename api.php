@@ -2,6 +2,9 @@
 
 header("Content-Type: application/json");
 
+$requestBody = file_get_contents('php://input');
+$object = json_decode($requestBody, true);
+
 class API
 {
     private $connection;
@@ -42,7 +45,7 @@ class API
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
 
-        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "Wishlist"];        //might add admin
+        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -130,8 +133,28 @@ class API
                 break;
             case "Reviews":
                 break;
-            case "Wishlist":
-                break;
+            case "GetWishlist":
+                $apikey = $data['apikey'];
+
+                return $this -> getWishlist($apikey);
+            case: "AddWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->addWishlist($apikey, $pid);
+            case: "RemoveWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->removeWishlist($apikey, $pid);
+            default:
+                return $this->response("HTTP/1.1 400 Bad Request", "error", "Unrecognised Post type", null);
         }
 
     }
@@ -433,21 +456,151 @@ class API
     //this adds the passed in product to the users wishlist
     private function addWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+        
+        //check if product id exists
+        $query = 'SELECT id FROM u24573699_products WHERE id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if(!$pstmt){
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('s', $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product does not exist", null);
+        }
+        $pstmt -> close();
+
+        //check if product is already in wishlist
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if($pstmt -> num_rows > 0){
+            $this -> response("HTTP/1.1 400 BAD REQUEST", "error", "Product already in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'INSERT INTO u24573699_wishlist (user_id, product_id) VALUES (?, ?)';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('iis', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product added to wishlist", null);
     }
 
     //this removes the passed in product from the users wishlist
     private function removeWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product not in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'DELETE FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product removed from wishlist", null);
     }
 
     //this gets everything a a users wishlist
     private function getWishlist($apikey)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt->store_result();
+        if ($pstmt -> num_rows === 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> bind_result($userID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+        
+        $query = 'SELECT * FROM u24573699_products u_p ' . 
+                  'JOIN u24573699_wishlist u_w ' .
+                  'ON u_p.id = u_w.product_id ' .
+                  'WHERE u_w.user_id = ?';
+
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('i', $userID);
+        $pstmt -> execute();
+        $result = $pstmt -> get_result();
+
+        $wishlist = [];
+        while ($row = $result -> fetch_assoc()) {
+            $wishlist[] = $row;
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", ['wishlist' => $wishlist]);
     }
 
     //to change the price of an item
     private function updatePrice($apikey, $price, $retailer, $product, $date)
     {
+
     }
 }
 
