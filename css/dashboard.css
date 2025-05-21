@@ -1,0 +1,108 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+/* .dashboard-content {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+} */
+
+.dashboard-content {
+    display: flex;
+    gap: 20px;
+    flex-wrap: nowrap; /* prevent wrapping to new line */
+    justify-content: space-between;
+}
+
+.dashboard-content .card {
+    flex: 1 1 0;
+    min-width: 250px;
+}
+
+.card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card h2 {
+    font-family: 'Lora', serif;
+    font-size: 22px;
+    color: #1a2b6d;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.card ul {
+    padding-left: 20px;
+    line-height: 1.7;
+}
+
+.shortcut-buttons {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #1a2b6d;
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #0d1a4a;
+    transform: translateY(-2px);
+}
+
+@media screen and (max-width: 768px) {
+    .dashboard-content {
+        flex-direction: column;
+    }
+
+    .dashboard-left,
+    .dashboard-right {
+        flex: 1 1 100%;
+    }
+
+    .shortcut-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 80%;
+    }
+}
