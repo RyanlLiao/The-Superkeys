@@ -43,7 +43,6 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-
         $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
