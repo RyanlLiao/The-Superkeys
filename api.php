@@ -8,6 +8,7 @@ $object = json_decode($requestBody, true);
 class API
 {
     private $connection;
+    private $db;
 
     public static function instance()
     {
@@ -68,11 +69,8 @@ class API
             }
         }
 
-        //check api key 
-
         if (isset($data['apikey']) && !$this->checkApikey($data['apikey']))
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
-
 
         $type = $data['type'];
 
@@ -92,7 +90,7 @@ class API
                 if ($empty || !$email_check || !$pass_check)
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing or Invalid parameters", null);
 
-                $statement = $this->connection->prepare("SELECT * FROM studentnumber_users WHERE email= ?");
+                $statement = $this->connection->prepare("SELECT * FROM Person WHERE email= ?");
                 $statement->bind_param("s", $email);
                 $statement->execute();
 
@@ -182,7 +180,7 @@ class API
         if (empty($apikey))
             return false;
 
-        $statement = $this->connection->prepare("SELECT id FROM studentnumber_users WHERE api_key = ?");
+        $statement = $this->connection->prepare("SELECT id FROM Person WHERE api_key = ?");
         $statement->bind_param("s", $apikey);
         $statement->execute();
 
@@ -200,7 +198,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password,name FROM studentnumber_users WHERE email = ?";
+        $query = "SELECT api_key, salt, password,name FROM Person WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
@@ -227,29 +225,28 @@ class API
     {
     }
 
+    private function getWhitelist()
+    {
+        $allowed = [
+            "product_id",
+            "product_name",
+            "description",
+            "type",
+            "availability",
+            "average_rating",
+            "images",
+            "retailer",
+            "price",
+            "price_min",
+            "price_max",
+        ];
+        return $allowed;
+    }
+
     //this will get products from the database - only manager apikeys will be valid
     private function getProducts($data)
     {
-        $allowed = [
-            "id",
-            "title",
-            "brand",
-            "description",
-            "initial_price",
-            "final_price",
-            "categories",
-            "image_url",
-            "product_dimensions",
-            "date_first_available",
-            "manufacturer",
-            "department",
-            "features",
-            "is_available",
-            "images",
-            "country_of_origin",
-            "price_min",
-            "price_max"
-        ];
+        $allowed = $this->getWhitelist();
 
         //input validation
         $return = $data["return"] === "*" ? "*" : array_intersect($data["return"], $allowed);
@@ -264,14 +261,6 @@ class API
             $order = in_array($temp, ["ASC", "DESC"]) ? $temp : null;
         }
 
-        //SELECT
-        if ($sort != null && $return !== '*' && !in_array($sort, $return))   //adding sort to select incase its not part of return
-            $return[] = $sort;
-
-        //adding in currency to set default 
-        if ($return !== '*')
-            $return[] = "currency";
-
 
         $select = ($return === "*") ? "*" : implode(",", $return);
 
@@ -281,23 +270,22 @@ class API
         $vartypes = "";
 
         if ($search != null) {
-
             foreach ($search as $key => $value) {
 
                 if ($key === "price_min") {
-                    $where[] = "final_price >= ?";
+                    $where[] = "price >= ?";
                     $parameters[] = (int) $value;
-                    $vartypes .= "i";
+                    $vartypes .= "d";
                 } else if ($key === "price_max") {
-                    $where[] = "final_price <= ?";
+                    $where[] = "price <= ?";
                     $parameters[] = (int) $value;
-                    $vartypes .= "i";
-                } else if ($key === "id" && is_array($value)) {
+                    $vartypes .= "d";
+                } else if (is_array($value)) {
                     $placeholders = implode(",", array_fill(0, count($value), '?'));
-                    $where[] = "id IN ($placeholders)";
-                    foreach ($value as $id) {
-                        $parameters[] = (int) $id;
-                        $vartypes .= "i";
+                    $where[] = "$key IN ($placeholders)";
+                    foreach ($value as $item) {
+                        $parameters[] = (int) $item;
+                        $vartypes .= "s";
                     }
                 } else {
                     if ($fuzzy === false) {
@@ -318,26 +306,15 @@ class API
         $limitClause = ($limit != null) ? "LIMIT " . $limit : "";
 
         //get rows
-        $query = "SELECT  $select  FROM studentnumber_products $whereClause  ORDER BY RAND()  $limitClause";
+        $query = "SELECT  $select  FROM Product NATURAL JOIN Sold_by $whereClause  ORDER BY RAND()  $limitClause";
         $statement = $this->connection->prepare($query);
-
-        empty($parameters) ? $statement->execute() : $statement->execute($parameters);
 
         if (!empty($parameters))
             $statement->bind_param($vartypes, $parameters);
 
         $statement->execute();
         $result = $statement->get_result();
-        $result = $result->fetch_assoc();
-
-        //converting currencies 
-        if ($return === "*" || in_array("final_price", $return) || in_array("initial_price", $return)) {
-            $currencyList = $this->currency();
-
-            for ($i = 0; $i < count($result); $i++) {
-                $result[$i] = $this->convert($currencyList, $result[$i]);
-            }
-        }
+        $result = $result->fetch_all(MYSQL_ASSOC);
 
         //Sorting
         if ($sort !== null) {
@@ -349,57 +326,76 @@ class API
             });
         }
 
-
-        if ($return !== "*") {
-            foreach ($result as &$row) {
-                unset($row["currency"]);
-            }
-            unset($row);
-        }
-
-
-        //remove sort if it wasn't in the return
-        if ($sort != null && $return !== "*" && !in_array($sort, $data["return"])) {   //adding sort to select incase its not part of return
-            //echo "removing sort\n";
-            foreach ($result as &$row)
-                unset($row[$sort]);
-
-            unset($row);
-        }
-
         return $result;
-
     }
 
     //this will add products to the table - only manager apikeys will be valid
     private function addProducts($product)
     {
-        $query = "INSERT INTO studentnumber_products VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        $query = "INSERT INTO Product (product_name,description,type,availability,average_rating,images) VALUES(?,?,?,?,?,?)";
+
         $statement = $this->connection->prepare($query);
         $statement->bind_param(
-            "sssddssssssssiss",
-            $product['title'],
-            $product['brand'],
+            "sssifs",
+            $product['product_name'],
             $product['description'],
-            $product['initial_price'],
-            $product['final_price'],
-            $product['currency'],
-            $product['categories'],
-            $product['image_url'],
-            $product['product_dimensions'],
-            $product['date_first_available'],
-            $product['manufacturer'],
-            $product['department'],
-            $product['features'],
-            $product['is_available'],
+            $product['type'],
+            $product['availability'],
+            $product['average_rating'],
             $product['images'],
-            $product['country_of_origin']
         );
-        
-        if(!$statement->execute())
+
+        if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "product added successfyllu",null);
+        $added = $this->connection->insert_id;
+
+        //now update product specialisation
+        $type = $product['type'];
+        $placeholders = "?";
+        $vartypes = "";
+        $column = "";
+
+        if ($type === "Audo_Visual_Equipment") {
+            $placeholders .= ",?,?";
+            $vartypes .= "dsi";
+            $column .= "kHz,resolution,product_id";
+        } else if ($type === 'Electronic_Accessoried') {
+            $placeholders .= ",?,?";
+            $vartypes .= "iii";
+            $column .= "product_id,accessory_type,compatibility";
+        } else if ($type === "Computing_Devices") {
+            $placeholders .= ",?,?,?";
+            $vartypes .= "issi";
+            $column .= "product_id,cpu,operating_system,storage";
+        }
+
+        $query = "INSERT INTO $type ($column) VALUES($placeholders)";
+        $statement = $this->connection->prepare($query);
+        $statement->bind_param($vartypes, $added);  ////fix THISSS
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
+
+        //update Sold_by
+        $retailer = $product['retailer_id'];
+        $price = $product['price'];
+
+        $query = "INSERT INTO Sold_by VALUES(?,?,?)";
+        $statement = $this->connection->prepare($query);
+        $statement->bind_param("iif", $retailer, $added, $price);
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
+
+        //update price_history
+        $query = "INSERT INTO Price_History (product_id,retailer_id,price) VALUES(?,?,?)";
+        $statement = $this->connection->prepare($query);
+        $statement->bind_param("iif",$added, $retailer,$price);
+
+        //not sure what other tables to update
+        return $this->response("HTTP/1.1 200 OK", "success", "product added successfyllu", null);
     }
 
     //this will remove products from the tables - only manager apikeys will be valid
@@ -407,12 +403,12 @@ class API
     {
         $query = "DELETE FROM studentnum_products WHERE id=?";
         $statement = $this->connection->prepare($query);
-        $statement->bind_param("i",$pid);
-        
-        if(!$statement->execute())
+        $statement->bind_param("i", $pid);
+
+        if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't remove product", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully",null);
+        return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
     //this will update the prices that a retailer sells a product at
@@ -422,7 +418,7 @@ class API
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey/*, retailer information*/)
     {
-        
+
     }
 
     //this removes a retailer from the table - only manager apikeys will be accepted
@@ -436,45 +432,6 @@ class API
     {
     }
 
-    //this fetches a currency list
-    private function currency()
-    {
-        $curl = curl_init("https://wheatley.cs.up.ac.za/api/");
-
-        $body = array(
-            "studentnum" => "student_number",
-            "apikey" => "apikey (.env file???)",
-            "type" => "GetCurrencyList"
-        );
-
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($body));
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-        $result = curl_exec($curl);
-        curl_close($curl);
-
-        $result = json_decode($result, true);
-        if ($result && isset($result["data"])) {
-            return $result["data"];
-        }
-        return null;
-    }
-
-    //this updates the currency of prices for a row
-    private function convert($currencyList, $row)
-    {
-        $current = $row["currency"];
-        $target = "ZAR";
-        $exchange = $currencyList[$target] / $currencyList[$current];
-
-        foreach ($row as $key => $value) {
-            if (strpos($key, "price") !== false) {
-                $row[$key] = round($value * $exchange, 2);
-            }
-        }
-
-        return $row;
-    }
 
     //this will add a users review for a product from a specific retailer
     //it takes in an associative array {productID: retailer};
