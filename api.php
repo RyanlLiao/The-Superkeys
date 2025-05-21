@@ -93,7 +93,7 @@ class API
                 if ($empty || !$email_check || !$pass_check)
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing or Invalid parameters", null);
 
-                $statement = $this->connection->prepare("SELECT * FROM u24584585_user_info WHERE email= ?");
+                $statement = $this->connection->prepare("SELECT * FROM studentnumber_users WHERE email= ?");
                 $statement->bind_param("s", $email);
                 $statement->execute();
 
@@ -183,7 +183,7 @@ class API
         if (empty($apikey))
             return false;
 
-        $statement = $this->connection->prepare("SELECT id FROM u24584585_user_info WHERE api_key = ?");
+        $statement = $this->connection->prepare("SELECT id FROM studentnumber_users WHERE api_key = ?");
         $statement->bind_param("s", $apikey);
         $statement->execute();
 
@@ -201,7 +201,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password, name FROM u24584585_user_info WHERE email = ?";
+        $query = "SELECT api_key, salt, password,name FROM studentnumber_users WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
@@ -231,32 +231,189 @@ class API
     //this will get products from the database - only manager apikeys will be valid
     private function getProducts($data)
     {
-        $return = $data["return"];
+        $allowed = [
+            "id",
+            "title",
+            "brand",
+            "description",
+            "initial_price",
+            "final_price",
+            "categories",
+            "image_url",
+            "product_dimensions",
+            "date_first_available",
+            "manufacturer",
+            "department",
+            "features",
+            "is_available",
+            "images",
+            "country_of_origin",
+            "price_min",
+            "price_max"
+        ];
 
-        if ($return !== "*") {
-            foreach ($return as $id)
-                $id = (int) $id;
+        //input validation
+        $return = $data["return"] === "*" ? "*" : array_intersect($data["return"], $allowed);
+        $search = empty($data["search"]) ? null : array_intersect_key($data["search"], array_flip($allowed));
+        $sort = isset($data["sort"]) && in_array($data["sort"], $allowed) ? $data["sort"] : null;
+        $limit = isset($data["limit"]) && is_numeric($data["limit"]) && $data["limit"] > 0 ? $data["limit"] : null;
+        $fuzzy = isset($data["fuzzy"]) && in_array($data["fuzzy"], [true, false]) ? $data["fuzzy"] : null;
+
+        $order = null;
+        if (isset($data["order"])) {
+            $temp = strtoupper(trim($data["order"]));
+            $order = in_array($temp, ["ASC", "DESC"]) ? $temp : null;
         }
 
-        //where  statement
-        $where = $return == "*" ? "" : implode(",",$return); 
+        //SELECT
+        if ($sort != null && $return !== '*' && !in_array($sort, $return))   //adding sort to select incase its not part of return
+            $return[] = $sort;
 
-        if(isset($data['order']))
-            $order = ($data['order'] === "ASC" || $data['order'] === "DESC") ? $data["order"] : "";
+        //adding in currency to set default 
+        if ($return !== '*')
+            $return[] = "currency";
 
-        if(isset($data['search']))
-            $search = "";   //FINISH THISSSSS
-        
+
+        $select = ($return === "*") ? "*" : implode(",", $return);
+
+        //WHERE
+        $where = [];
+        $parameters = [];
+        $vartypes = "";
+
+        if ($search != null) {
+
+            foreach ($search as $key => $value) {
+
+                if ($key === "price_min") {
+                    $where[] = "final_price >= ?";
+                    $parameters[] = (int) $value;
+                    $vartypes .= "i";
+                } else if ($key === "price_max") {
+                    $where[] = "final_price <= ?";
+                    $parameters[] = (int) $value;
+                    $vartypes .= "i";
+                } else if ($key === "id" && is_array($value)) {
+                    $placeholders = implode(",", array_fill(0, count($value), '?'));
+                    $where[] = "id IN ($placeholders)";
+                    foreach ($value as $id) {
+                        $parameters[] = (int) $id;
+                        $vartypes .= "i";
+                    }
+                } else {
+                    if ($fuzzy === false) {
+                        $where[] = "$key = ?";
+                        $parameters[] = $value;
+                        $vartypes .= "s";
+                    } else {
+                        $where[] = "$key LIKE ?";
+                        $parameters[] = "%" . $value . "%";
+                        $vartypes .= "s";
+                    }
+                }
+            }
+        }
+
+        $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+        //limit
+        $limitClause = ($limit != null) ? "LIMIT " . $limit : "";
+
+        //get rows
+        $query = "SELECT  $select  FROM studentnumber_products $whereClause  ORDER BY RAND()  $limitClause";
+        $statement = $this->connection->prepare($query);
+
+        empty($parameters) ? $statement->execute() : $statement->execute($parameters);
+
+        if (!empty($parameters))
+            $statement->bind_param($vartypes, $parameters);
+
+        $statement->execute();
+        $result = $statement->get_result();
+        $result = $result->fetch_assoc();
+
+        //converting currencies 
+        if ($return === "*" || in_array("final_price", $return) || in_array("initial_price", $return)) {
+            $currencyList = $this->currency();
+
+            for ($i = 0; $i < count($result); $i++) {
+                $result[$i] = $this->convert($currencyList, $result[$i]);
+            }
+        }
+
+        //Sorting
+        if ($sort !== null) {
+            usort($result, function ($a, $b) use ($sort, $order) {
+                if ($order === "ASC")
+                    return $a[$sort] <=> $b[$sort];
+                else
+                    return $b[$sort] <=> $a[$sort];
+            });
+        }
+
+
+        if ($return !== "*") {
+            foreach ($result as &$row) {
+                unset($row["currency"]);
+            }
+            unset($row);
+        }
+
+
+        //remove sort if it wasn't in the return
+        if ($sort != null && $return !== "*" && !in_array($sort, $data["return"])) {   //adding sort to select incase its not part of return
+            //echo "removing sort\n";
+            foreach ($result as &$row)
+                unset($row[$sort]);
+
+            unset($row);
+        }
+
+        return $result;
+
     }
 
     //this will add products to the table - only manager apikeys will be valid
-    private function addProducts($apikey /* ,product information */)
+    private function addProducts($product)
     {
+        $query = "INSERT INTO studentnumber_products VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        $statement = $this->connection->prepare($query);
+        $statement->bind_param(
+            "sssddssssssssiss",
+            $product['title'],
+            $product['brand'],
+            $product['description'],
+            $product['initial_price'],
+            $product['final_price'],
+            $product['currency'],
+            $product['categories'],
+            $product['image_url'],
+            $product['product_dimensions'],
+            $product['date_first_available'],
+            $product['manufacturer'],
+            $product['department'],
+            $product['features'],
+            $product['is_available'],
+            $product['images'],
+            $product['country_of_origin']
+        );
+        
+        if(!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
+
+        return $this->response("HTTP/1.1 200 OK", "success", "product added successfyllu",null);
     }
 
     //this will remove products from the tables - only manager apikeys will be valid
     private function removeProduct($apikey, $pid)
     {
+        $query = "DELETE FROM studentnum_products WHERE id=?";
+        $statement = $this->connection->prepare($query);
+        $statement->bind_param("i",$pid);
+        
+        if(!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't remove product", null);
+
+        return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully",null);
     }
 
     //this will update the prices that a retailer sells a product at
@@ -266,6 +423,7 @@ class API
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey/*, retailer information*/)
     {
+        
     }
 
     //this removes a retailer from the table - only manager apikeys will be accepted
@@ -282,11 +440,41 @@ class API
     //this fetches a currency list
     private function currency()
     {
+        $curl = curl_init("https://wheatley.cs.up.ac.za/api/");
+
+        $body = array(
+            "studentnum" => "student_number",
+            "apikey" => "apikey (.env file???)",
+            "type" => "GetCurrencyList"
+        );
+
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($body));
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+        $result = curl_exec($curl);
+        curl_close($curl);
+
+        $result = json_decode($result, true);
+        if ($result && isset($result["data"])) {
+            return $result["data"];
+        }
+        return null;
     }
 
     //this updates the currency of prices for a row
     private function convert($currencyList, $row)
     {
+        $current = $row["currency"];
+        $target = "ZAR";
+        $exchange = $currencyList[$target] / $currencyList[$current];
+
+        foreach ($row as $key => $value) {
+            if (strpos($key, "price") !== false) {
+                $row[$key] = round($value * $exchange, 2);
+            }
+        }
+
+        return $row;
     }
 
     //this will add a users review for a product from a specific retailer
@@ -365,12 +553,51 @@ class API
             $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         }
         $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product added to wishlist", null);
     }
 
     //this removes the passed in product from the users wishlist
     private function removeWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
 
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product not in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'DELETE FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product removed from wishlist", null);
     }
 
     //this gets everything a a users wishlist
