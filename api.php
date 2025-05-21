@@ -119,7 +119,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
 
                 if ($return == "*" || is_array($return))
-                    return $this->getProducts($data);
+                    return $this -> response("HTTP/1.1 200 OK", "success", "", $this->getProducts($data));
 
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Post Parameter", null);
 
@@ -129,8 +129,26 @@ class API
                 break;
             case "Reviews":
                 break;
-            case "Wishlist":
-                break;
+            case "GetWishlist":
+                $apikey = $data['apikey'];
+
+                return $this -> getWishlist($apikey);
+            case "AddWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this -> addWishlist($apikey, $pid);
+            case "RemoveWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->removeWishlist($apikey, $pid);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
 
@@ -310,7 +328,7 @@ class API
 
         $statement->execute();
         $result = $statement->get_result();
-        $result = $result->fetch_all(MYSQL_ASSOC);
+        $result = $result->fetch_all(MYSQLI_ASSOC);
 
         //Sorting
         if ($sort !== null) {
@@ -451,16 +469,145 @@ class API
     //this adds the passed in product to the users wishlist
     private function addWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+        
+        //check if product id exists
+        $query = 'SELECT id FROM u24573699_products WHERE id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if(!$pstmt){
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('s', $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product does not exist", null);
+        }
+        $pstmt -> close();
+
+        //check if product is already in wishlist
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if($pstmt -> num_rows > 0){
+            $this -> response("HTTP/1.1 400 BAD REQUEST", "error", "Product already in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'INSERT INTO u24573699_wishlist (user_id, product_id) VALUES (?, ?)';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('iis', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product added to wishlist", null);
     }
 
     //this removes the passed in product from the users wishlist
     private function removeWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product not in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'DELETE FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "Product removed from wishlist", null);
     }
 
     //this gets everything a a users wishlist
     private function getWishlist($apikey)
     {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt->store_result();
+        if ($pstmt -> num_rows === 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> bind_result($userID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+        
+        $query = 'SELECT * FROM u24573699_products u_p ' . 
+                  'JOIN u24573699_wishlist u_w ' .
+                  'ON u_p.id = u_w.product_id ' .
+                  'WHERE u_w.user_id = ?';
+
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('i', $userID);
+        $pstmt -> execute();
+        $result = $pstmt -> get_result();
+
+        $wishlist = [];
+        while ($row = $result -> fetch_assoc()) {
+            $wishlist[] = $row;
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", ['wishlist' => $wishlist]);
     }
 
     //to change the price of an item
@@ -472,5 +619,15 @@ class API
 
 $API = API::instance();
 $request = $_SERVER["REQUEST_METHOD"];
+$requestBody = file_get_contents('php://input');
+$object = json_decode($requestBody, true);
+
+$result = $API->request($object, $request);
+if ($result !== true) {
+    echo $result;
+    exit;
+}
+
+echo $API->validate($object);
 
 ?>
