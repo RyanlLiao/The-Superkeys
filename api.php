@@ -311,30 +311,106 @@ class API
     //this adds the passed in product to the users wishlist
     private function addWishlist($apikey, $pid)
     {
-    }
-
-    //this removes the passed in product from the users wishlist
-    private function removeWishlist($apikey, $pid)
-    {
-    }
-
-    //this gets everything a a users wishlist
-    private function getWishlist($apikey)
-    {
-        $query = "SELECT id FROM u24584585_users WHERE api_key = ?";
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
         $pstmt = $this -> connection -> prepare($query);
         if(!$pstmt)
             return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         $pstmt -> bind_param("s", $apikey);
         $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+        
+        //check if product id exists
+        $query = 'SELECT id FROM u24573699_products WHERE id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if(!$pstmt){
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('s', $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product does not exist", null);
+        }
+        $pstmt -> close();
 
+        //check if product is already in wishlist
+        $query = 'SELECT id FROM u24573699_wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if($pstmt -> num_rows > 0){
+            $this -> response("HTTP/1.1 400 BAD REQUEST", "error", "Product already in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'INSERT INTO u24573699_wishlist (user_id, product_id) VALUES (?, ?)';
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('iis', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+    }
+
+    //this removes the passed in product from the users wishlist
+    private function removeWishlist($apikey, $pid)
+    {
+
+    }
+
+    //this gets everything a a users wishlist
+    private function getWishlist($apikey)
+    {
+        $query = "SELECT id FROM u24573699_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt->store_result();
+        if ($pstmt -> num_rows === 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> bind_result($userID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+        
+        $query = 'SELECT * FROM u24573699_products u_p ' . 
+                  'JOIN u24573699_wishlist u_w ' .
+                  'ON u_p.id = u_w.product_id ' .
+                  'WHERE u_w.user_id = ?';
+
+        $pstmt = $this -> mysqli -> prepare($query);
+        if (!$pstmt) {
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('i', $userID);
+        $pstmt -> execute();
         $result = $pstmt -> get_result();
-        $result = $result -> fetch_assoc();
 
-        if (!$result)
-            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "User does not exist", null);
+        $wishlist = [];
+        while ($row = $result -> fetch_assoc()) {
+            $wishlist[] = $row;
+        }
+        $pstmt -> close();
 
-        return $this -> response("HTTP/1.1 200 OK", "success", "", ['wishlist' => $result]);
+        return $this -> response("HTTP/1.1 200 OK", "success", "", ['wishlist' => $wishlist]);
     }
 
     //to change the price of an item
