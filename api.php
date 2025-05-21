@@ -2,6 +2,9 @@
 
 header("Content-Type: application/json");
 
+$requestBody = file_get_contents('php://input');
+$object = json_decode($requestBody, true);
+
 class API
 {
     private $connection;
@@ -41,7 +44,7 @@ class API
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
 
-        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "Wishlist"];        //might add admin
+        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -132,8 +135,28 @@ class API
                 break;
             case "Reviews":
                 break;
-            case "Wishlist":
-                break;
+            case "GetWishlist":
+                $apikey = $data['apikey'];
+
+                return $this -> getWishlist($apikey);
+            case: "AddWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->addWishlist($apikey, $pid);
+            case: "RemoveWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->removeWishlist($apikey, $pid);
+            default:
+                return $this->response("HTTP/1.1 400 Bad Request", "error", "Unrecognised Post type", null);
         }
 
     }
@@ -178,7 +201,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password,name FROM u24584585_user_info WHERE email = ?";
+        $query = "SELECT api_key, salt, password, name FROM u24584585_user_info WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
@@ -298,11 +321,26 @@ class API
     //this gets everything a a users wishlist
     private function getWishlist($apikey)
     {
+        $query = "SELECT id FROM u24584585_users WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+
+        $result = $pstmt -> get_result();
+        $result = $result -> fetch_assoc();
+
+        if (!$result)
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "User does not exist", null);
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", ['wishlist' => $result]);
     }
 
     //to change the price of an item
     private function updatePrice($apikey, $price, $retailer, $product, $date)
     {
+
     }
 }
 
