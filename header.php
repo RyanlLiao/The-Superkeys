@@ -1,7 +1,6 @@
 <link rel="stylesheet" href="css/header.css">
 <link rel="stylesheet" href="css/products.css">
 
-<<<<<<< HEAD
 <nav class="navbar">
     <ul>
         <li><a href="signup.php">Sign Up</a></li>
@@ -12,7 +11,6 @@
         <li><a href="customerDashboard.php">Customer Dashboard</a></li>   
     </ul>
 </nav>
-=======
  <header class="headerrr">
                 <div class="header-container">
                     <img src="img/logo2.png" alt="Logo" class="pLogo">
@@ -36,7 +34,6 @@
                     </nav>
                 </div>
     </header>
->>>>>>> f4538723bf8c2c26bf9510f00c0a7e86e50c4c60
 
 <!-- <hr> -->
 
