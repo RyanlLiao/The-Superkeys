@@ -46,14 +46,15 @@
         </ul>
     </div>
 
-    <div class="card">
+    <!-- <div class="card">
         <h2>Recent Activity</h2>
         <ul>
             <li>User "jane_doe" added a review</li>
             <li>Admin updated Product A price</li>
             <li>New stockist registered</li>
         </ul>
-    </div>
+    </div> -->
+    <!-- Implement Later... -->
 
     <div class="card">
         <h2>Price History</h2>

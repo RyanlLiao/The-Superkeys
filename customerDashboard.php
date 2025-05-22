@@ -19,34 +19,17 @@ $userName = $_SESSION['user_name'] ?? 'Valued Customer';
 
         <div class="dashboard-content">
             <div class="card stat-card">
-                <h3>Orders Placed</h3>
-                <p>15</p>
+                <h3>Price History</h3>
+                <p>Click here to view</p>
             </div>
         </div>
 
-        <div class="card">
-            <h2>Recent Orders</h2>
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Order #</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>#1001</td>
-                        <td>2025-05-20</td>
-                        <td>Shipped</td>
-                        <td>R500.00</td>
-                        <td><a href="#">View</a> | <a href="#">Track</a></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <div class="card stat-card">
+                <h3>Top Rated Products</h3>
+                <p>Click here to view</p>
+            </div>
+
+       
 
         <!-- Wishlist -->
         <div class="card">
@@ -58,7 +41,7 @@ $userName = $_SESSION['user_name'] ?? 'Valued Customer';
         </div>
 
         <!-- Recommended Products -->
-        <div class="card">
+        <!-- <div class="card">
             <h2>Recommended for You</h2>
             <div class="recommended-products">
                 <div class="product-card">
@@ -72,15 +55,9 @@ $userName = $_SESSION['user_name'] ?? 'Valued Customer';
                     <button>View</button>
                 </div>
             </div>
-        </div>
+        </div> -->
 
-        <!-- Notifications -->
-        <div class="card">
-            <h2>Notifications</h2>
-            <ul class="notifications">
-                <li>Your order #1001 has been shipped.</li>
-            </ul>
-        </div>
+      
     </div>
 </body>
 </html>
