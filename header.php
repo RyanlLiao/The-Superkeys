@@ -16,9 +16,8 @@
                                         class="icon"> <br>Products</a></li>
                             <li id="wishlist-link"><a href="wishlist.php"><img src="img/wishlist.png" alt="Order"
                                         class="icon"> <br> Wishlist</a></li>
-                            <li id="dashboard-link"><a href="dashboard.php"><img src="img/dashboard.png" alt="Order"
-                                        class="icon"> <br>Dashboard</a></li>
-                            
+                            <li id="dashboard-link"><a href="managerDashboard.php"><img src="img/dashboard.png" alt="Order"
+                                        class="icon"> <br>Dashboard</a></li>    
                             <!-- Dashboard is a logged in feature? -->
                             <li id="theme toggle"><a href=""><img src="img/light_mode.png" alt="Order"
                                         class="icon"> <br>Themes</a></li>

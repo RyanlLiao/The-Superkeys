@@ -22,8 +22,8 @@
         <h2>Manager Actions</h2>
         <div class="shortcut-buttons">
             <a href="manageCategories.php" class="btn">Manage Categories</a>
-            <a href="manageProducts.php" class="btn">Manage Products</a>
-            <a href="manageUsers.php" class="btn">Manage Users</a>
+            <a href="manage-products.php" class="btn">Manage Products</a>
+            <a href="manageUserDel.php" class="btn">Manage Users</a>
         </div>
     </div>
 

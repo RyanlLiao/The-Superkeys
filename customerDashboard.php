@@ -28,17 +28,7 @@ $userName = $_SESSION['user_name'] ?? 'Valued Customer';
                 <h3>Top Rated Products</h3>
                 <p>Click here to view</p>
             </div>
-
-       
-
-        <!-- Wishlist -->
-        <div class="card">
-            <h2>Your Wishlist</h2>
-            <ul class="wishlist">
-                <li>Product A <button>Add to Cart</button></li>
-                <li>Product B <button>Add to Cart</button></li>
-            </ul>
-        </div>
+            
 
         <!-- Recommended Products -->
         <!-- <div class="card">
