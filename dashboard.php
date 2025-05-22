@@ -19,7 +19,7 @@
 
 <div class="dashboard-container">
     <div class="card full-width">
-        <h2>Manager Shortcuts</h2>
+        <h2>Manager Actions</h2>
         <div class="shortcut-buttons">
             <a href="manageCategories.php" class="btn">Manage Categories</a>
             <a href="manageProducts.php" class="btn">Manage Products</a>
