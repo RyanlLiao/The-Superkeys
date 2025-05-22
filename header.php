@@ -3,7 +3,7 @@
 
  <header class="headerrr">
                 <div class="header-container">
-                    <img src="img/logo2.png" alt="Logo" class="pLogo">
+                    <img src="img/logo.png" alt="Logo" class="pLogo">
                     <nav class="navBar">
                         <ul>
                             <li id="signup-link"><a href="signup.php"><img src="img/SignUp.png" alt="Order"
