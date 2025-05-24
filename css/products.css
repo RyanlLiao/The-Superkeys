@@ -69,7 +69,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 25px;
     overflow: hidden;
-    width: 45%;
+    width: 75%;
 }
 
 .search-box input[type="text"] {
@@ -98,9 +98,9 @@ body {
 .filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 10px;
     margin: 30px auto;
-    width: 60%;
+    width: 80%;
     justify-content: center;
 }
 
@@ -111,20 +111,19 @@ body {
     border-radius: 10px;
     font-size: 14px;
     outline: none;
+    cursor: pointer;
 }
 
 .product-container {
     max-width: 1600px;
     margin: 10px auto;
-    padding: 20px;
+    padding: 10px;
     display: flex;
     justify-content: center; 
     
 }
 
 .product-grid {
-    /* display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); */
     display: flex; 
     flex-wrap: wrap;
     justify-content: center;
@@ -162,7 +161,7 @@ body {
 .add{
     width: 60%;
     padding: 8px;
-    background-color: #0B1957;
+    background-color: #003459;
     color: #F7F7F3;
     border: none;
     font-size: 14px;
@@ -170,6 +169,46 @@ body {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
+
+.add:hover{
+    background-color: #00243D;
+}
+
+.product h2,
+.product h3,
+.product p {
+    margin: 10px 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: #333;
+}
+
+.product h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.product h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    
+}
+
+.product p {
+    font-size: 0.9rem;
+    color: #7b7979;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.product a {
+    text-decoration: none;
+
+}
+
+.product a:hover {
+    color: #003459; 
+}
+
 
 
 

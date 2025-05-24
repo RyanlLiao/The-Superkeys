@@ -43,30 +43,28 @@
                 <option value="sony">Sony</option>
             </select>
 
-            <select name="sort-by-price">
+            <select name="filter-by-price">
                 <option value="">Range</option>
                 <option value="100-200">100-200</option>
                 <option value="200-300">200-300</option>
                 <option value="300-400">300-400</option>
             </select>
+
+            <!-- WHAT PRICE ARE THESE BASED OFF OF ... minimum price -->
+
+            <select name="sort-by-price">
+                <option value="">Sort By</option>
+                <option value="ASC">Low to High</option>
+                <option value="DESC">High to Low</option>
+            </select>
     </div>
 </div>
     
-<div class ="product-ontainer">
-    <div class = "product-grid" >
-
-    <div class="product">
-        <a href="view.php"><img src="img/accessories.jpg" alt="Product 1" class="productImg"> </a>
-        <h2>Product Name</h2>
-        <h3>R299.00</h3>
-        <a href="view.php"> <p>Tap for more</p> </a>
-        <button class = "add">Add to Wishlist</button>
-    </div>
-
-    </div>
+<div class ="product-container">
+    <div class = "product-grid" ></div>
 </div> 
-
-
-
+<script src = "js\products.js"></script>
 </body>
+
+
 </html>
