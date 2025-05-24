@@ -41,7 +41,7 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-        $types = ["Register", "Login", "Products", "Prices", "Retailers", "Reviews", "GetWishlist", "AddWishlist", "RemoveWishlist"];        //might add admin
+        $types = ["Register", "Login", "Products", "Prices", "Retailers", "GetReviews", "AddReview", "RemoveReview", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist", "UpdatePrice"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -119,7 +119,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
 
                 if ($return == "*" || is_array($return))
-                    return $this->getProducts($data);
+                    return $this -> response("HTTP/1.1 200 OK", "success", "", $this->getProducts($data));
 
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Post Parameter", null);
 
@@ -127,13 +127,67 @@ class API
                 break;
             case "Retailers":
                 break;
-            case "Reviews":
-                break;
-            case "Wishlist":
-                break;
+            case "GetReviews":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+                $rating_min = $data['rating_min'] ?? null;
+                $rating_max = $data['rating_max'] ?? null;
+                $date_from = $data['date_from'] ?? null;
+                $date_to = $data['date_to'] ?? null;
+
+                return $this -> getReviews($apikey, $pid, $rating_min, $rating_max, $date_from, $date_to);
+            case "AddReview":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+                $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
+                $rating = $data['rating'];
+                $comment = $data['comment'];
+
+                if ($pid == "" || $date == "" || $rating == "" || $comment == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this -> addReview($apikey, $pid, $date, $rating, $comment);
+            case "RemoveReview":
+                $apikey = $data['apikey'];
+                $rid = $data['rid'];
+
+                if ($rid == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this -> removeReview($apikey, $rid);
+            case "GetWishlist":
+                $apikey = $data['apikey'];
+
+                return $this -> getWishlist($apikey);
+            case "AddWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this -> addWishlist($apikey, $pid);
+            case "RemoveWishlist":
+                $apikey = $data['apikey'];
+                $pid = $data['pid'];
+
+                if ($pid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Product ID", null);
+
+                return $this->removeWishlist($apikey, $pid);
+            case "UpdatePrice":
+                $apikey = $data['apikey'];
+                $price = $data['price'];
+                $retailer = $data['retailer'];
+                $product = $data['product'];
+                $date = isset($data['date']) && !empty($data['date']) ? date('Y-m-d H:i:s', strtotime($data['date'])) : date('Y-m-d H:i:s');
+
+                if ($price == "" || $retailer == "" || $product == "" || $date == "")
+                    return $this -> response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
+
+                return $this -> updatePrice($apikey, $price, $retailer, $product, $date);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
-
         }
 
     }
@@ -199,6 +253,36 @@ class API
     }
 
     //adds a user to the database of registered users
+     private function addUser($firstname, $lastname, $email, $password, $phoneNum, $user, $username, $apikey)
+    {
+        $salty = bin2hex(random_bytes(6));
+        $open = $password . $salty;
+        $safe = hash("sha256", $open);
+
+
+        $insert = "INSERT INTO Person (first_names, last_name, email, phone_number,username, hashed_password, salt, api_key) 
+                    VALUES (?,?,?,?,?,?,?,?)";
+        $statement = $this->connection->prepare($insert);
+        $statement->bind_param("ssssssss", $firstname, $lastname, $email, $phoneNum, $username, $safe, $salty, $apikey);
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add user", null);
+
+        $added = $this->connection->insert_id;
+
+        if ($user === "Manager") {
+            $query = "INSERT INTO Manager (manager_id) VALUES(?)";
+            $statement = $this->connection->prepare($query);
+            $statement->bind_param("i", $added);
+        } else if ($user === "User") {
+            $query = "INSERT INTO User (user_id) VALUES(?)";
+            $statement = $this->connection->prepare($query);
+            $statement->bind_param("i", $added);
+        }
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add user", null);
+    }
 
     //this build the api response 
     private function response($header, $result, $message, $data)
@@ -310,7 +394,7 @@ class API
 
         $statement->execute();
         $result = $statement->get_result();
-        $result = $result->fetch_all(MYSQL_ASSOC);
+        $result = $result->fetch_all(MYSQLI_ASSOC);
 
         //Sorting
         if ($sort !== null) {
@@ -420,6 +504,7 @@ class API
     //this removes a retailer from the table - only manager apikeys will be accepted
     private function removeRetailer($apikey, $rid)
     {
+        
     }
 
     //this will update the information (price) for a product
@@ -428,49 +513,367 @@ class API
     {
     }
 
+    private function getReviews($apikey, $pid = null, $rating_min = null, $rating_max = null, $date_from = null, $date_to = null)
+    {
+        if (!$this->checkApikey($apikey)) {
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $query = "SELECT * FROM Review WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if ($pid !== null && $pid !== "") {
+            $query .= " AND product_id = ?";
+            $params[] = $pid;
+            $types .= "i";
+        }
+        if ($rating_min !== null && $rating_min !== "") {
+            $query .= " AND rating >= ?";
+            $params[] = $rating_min;
+            $types .= "d";
+        }
+        if ($rating_max !== null && $rating_max !== "") {
+            $query .= " AND rating <= ?";
+            $params[] = $rating_max;
+            $types .= "d";
+        }
+        if ($date_from !== null && $date_from !== "") {
+            $query .= " AND date >= ?";
+            $params[] = $date_from;
+            $types .= "s";
+        }
+        if ($date_to !== null && $date_to !== "") {
+            $query .= " AND date <= ?";
+            $params[] = $date_to;
+            $types .= "s";
+        }
+
+        $stmt = $this->connection->prepare($query);
+        if (!$stmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $reviews[] = $row;
+        }
+        $stmt->close();
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", $reviews);
+    }
 
     //this will add a users review for a product from a specific retailer
     //it takes in an associative array {productID: retailer};
-    private function addReview($apikey, $product_retailer)
+    private function addReview($apikey, $pid, $date, $rating, $comment)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+        //check if product id exists
+        $query = 'SELECT product_id FROM Product WHERE product_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt){
+            $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('i', $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product does not exist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'INSERT INTO Review (product_id, user_id, date, rating, comments) VALUES (?, ?, ?, ?, ?)';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('iisss', $pid, $userID, $date, $rating, $comment);
+        $pstmt -> execute();
+        if ($pstmt -> affected_rows == 0) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Review added successfully");
     }
 
-    private function removeReview($apikey, $product_retailer)
+    private function removeReview($apikey, $reviewID)
     {
+        if($this -> checkApikey($apikey) == false)
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+
+        $query = 'DELETE FROM Review WHERE review_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('i', $reviewID);
+        $pstmt -> execute();
+        if ($pstmt -> affected_rows == 0) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Review removed successfully");
     }
 
     //this will add a users comment for a product from a retailer
     //it takes in an associative array {productID: retailer};
-    private function addComment($apikey, $product_retailer, $comment)
-    {
-    }
+    // private function addComment($apikey, $product_retailer, $comment)
+    // {
+    // }
 
-    private function removeComment($apikey, $product_retailer)
-    {
-    }
+    // private function removeComment($apikey, $product_retailer)
+    // {
+    // }
     //this adds the passed in product to the users wishlist
     private function addWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+        
+        //check if product id exists
+        $query = 'SELECT product_id FROM Product WHERE product_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt){
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('i', $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product does not exist", null);
+        }
+        $pstmt -> close();
+
+        //check if product is already in wishlist
+        $query = 'SELECT * FROM Wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if($pstmt -> num_rows > 0){
+            return $this -> response("HTTP/1.1 400 BAD REQUEST", "error", "Product already in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'INSERT INTO Wishlist (user_id, product_id) VALUES (?, ?)';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('ii', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Product added to wishlist");
     }
 
     //this removes the passed in product from the users wishlist
     private function removeWishlist($apikey, $pid)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows > 0) {
+            $pstmt -> bind_result($userID);
+            $pstmt -> fetch();
+        } else {
+            return this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> close();
+
+        $query = 'SELECT * FROM Wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Product not in wishlist", null);
+        }
+        $pstmt -> close();
+
+        $query = 'DELETE FROM Wishlist WHERE user_id = ? AND product_id = ?';
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param('ii', $userID, $pid);
+        if (!$pstmt -> execute()) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Product removed from wishlist");
     }
 
     //this gets everything a a users wishlist
     private function getWishlist($apikey)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt->store_result();
+        if ($pstmt -> num_rows === 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+        $pstmt -> bind_result($userID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+        
+        $query = 'SELECT * FROM Product u_p ' . 
+                  'JOIN Wishlist u_w ' .
+                  'ON u_p.product_id = u_w.product_id ' .
+                  'WHERE u_w.user_id = ?';
+
+        $pstmt = $this -> connection -> prepare($query);
+        if (!$pstmt) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+
+        $pstmt -> bind_param('i', $userID);
+        $pstmt -> execute();
+        $result = $pstmt -> get_result();
+
+        $wishlist = [];
+        while ($row = $result -> fetch_assoc()) {
+            $wishlist[] = $row;
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", $wishlist);
     }
 
     //to change the price of an item
     private function updatePrice($apikey, $price, $retailer, $product, $date)
     {
+        //manager apikey to change price
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt -> bind_result($managerID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("i", $managerID);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt -> close();
+
+        // Get the current price from Sold_by
+        $query = "SELECT price FROM Sold_by WHERE retailer_id = ? AND product_id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if(!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("ii", $retailer, $product);
+        $pstmt->execute();
+        $pstmt->bind_result($old_price);
+        if (!$pstmt->fetch()) {
+            $pstmt->close();
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "No such product/retailer combination", null);
+        }
+        $pstmt->close();
+
+        // Insert the old price into Price_History
+        $query = "INSERT INTO Price_History (product_id, retailer_id, timestamp, price) VALUES (?, ?, ?, ?)";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("iisd", $product, $retailer, $date, $old_price);
+        $pstmt -> execute();
+        if ($pstmt -> affected_rows == 0) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't update price", null);
+        }
+        $pstmt -> close();
+
+        // Update the Sold_by table with the new price
+        $query = "UPDATE Sold_by SET price = ? WHERE retailer_id = ? AND product_id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if(!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("dii", $price, $retailer, $product);
+        if (!$pstmt->execute()) {
+            $pstmt->close();
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't update price", null);
+        }
+        $pstmt->close();
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", "Price updated successfully");
     }
 }
 
 
 $API = API::instance();
 $request = $_SERVER["REQUEST_METHOD"];
+$requestBody = file_get_contents('php://input');
+$object = json_decode($requestBody, true);
+
+$result = $API->request($object, $request);
+if ($result !== true) {
+    echo $result;
+    exit;
+}
+
+echo $API->validate($object);
 
 ?>
