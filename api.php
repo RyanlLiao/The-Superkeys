@@ -635,15 +635,6 @@ class API
         return $this -> response("HTTP/1.1 200 OK", "success", "", "Review removed successfully");
     }
 
-    //this will add a users comment for a product from a retailer
-    //it takes in an associative array {productID: retailer};
-    // private function addComment($apikey, $product_retailer, $comment)
-    // {
-    // }
-
-    // private function removeComment($apikey, $product_retailer)
-    // {
-    // }
     //this adds the passed in product to the users wishlist
     private function addWishlist($apikey, $pid)
     {
