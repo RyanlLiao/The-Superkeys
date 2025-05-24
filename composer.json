@@ -1,0 +1,18 @@
+{
+    "name": "natha/the-superkeys",
+    "description": "composer.json config",
+    "autoload": {
+        "psr-4": {
+            "Natha\\TheSuperkeys\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "TINODIWA",
+            "email": "130966831+TINODIWA@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
+}
