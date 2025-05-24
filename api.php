@@ -41,7 +41,7 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-        $types = ["Register", "Login", "Products", "Prices", "Retailers", "GetReviews", "AddReview", "RemoveReview", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist", "UpdatePrice"];        //might add admin
+        $types = ["Register", "Login", "Products", "Prices", "AddRetailer", "RemoveRetailer", "GetReviews", "AddReview", "RemoveReview", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist", "UpdatePrice"];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -125,8 +125,22 @@ class API
 
             case "Prices":
                 break;
-            case "Retailers":
-                break;
+            case "AddRetailer":
+                $apikey = $data['apikey'];
+                $rName = $data['name'];
+
+                if ($rName == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer Name", null);
+
+                return $this->addRetailer($apikey, $rName);
+            case "RemoveRetailer":
+                $apikey = $data['apikey'];
+                $rid = $data['rid'];
+
+                if ($rid == "")
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer ID", null);
+
+                return $this->removeRetailer($apikey, $rid);
             case "GetReviews":
                 $apikey = $data['apikey'];
                 $pid = $data['pid'];
@@ -496,15 +510,91 @@ class API
     //only manager apikeys will be accepted
 
     //this adds a new retailer - only manager apikeys will be accepted
-    private function addRetailer($apikey/*, retailer information*/)
+    private function addRetailer($apikey, $rName)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
 
+        $pstmt -> bind_result($managerID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("i", $managerID);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt -> close();
+
+        $query = "INSERT INTO Retailer (name) VALUES (?)";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $rName);
+        if (!$pstmt -> execute()) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Retailer added successfully");
     }
 
     //this removes a retailer from the table - only manager apikeys will be accepted
     private function removeRetailer($apikey, $rid)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("s", $apikey);
+        $pstmt -> execute();
+        $pstmt -> store_result();
         
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt -> bind_result($managerID);
+        $pstmt -> fetch();
+        $pstmt -> close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("i", $managerID);
+        $pstmt -> execute();
+        $pstmt -> store_result();
+        if ($pstmt -> num_rows == 0) {
+            return $this -> response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt -> close();
+
+        $query = "DELETE FROM Retailer WHERE retailer_id = ?";
+        $pstmt = $this -> connection -> prepare($query);
+        if(!$pstmt)
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt -> bind_param("i", $rid);
+        if (!$pstmt -> execute()) {
+            return $this -> response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> close();
+
+        return $this -> response("HTTP/1.1 200 OK", "success", "", "Retailer removed successfully");
     }
 
     //this will update the information (price) for a product
