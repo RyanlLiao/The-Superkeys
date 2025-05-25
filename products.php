@@ -15,7 +15,7 @@
 <div class ="search-and-filter">
     <div class="search-container">
         <form class="search-box">
-            <input type="text" name="q" placeholder="Search products...">
+            <input type="text" name="q" placeholder="Search products..." class="search_input">
             <button type="submit"><img src="img/search.png"/>Search </button>
             <!-- On click to trigger search... -->
         </form>
@@ -62,6 +62,7 @@
     
 <div class ="product-container">
     <div class = "product-grid" ></div>
+    <div class = "not-found">Product Not Found</div>
 </div> 
 <script src = "js\products.js"></script>
 </body>
