@@ -37,8 +37,7 @@
             <label for="type">User Type:</label>
             <select id="type" name="type" required>
             <option value="Customer">Customer</option>
-            <option value="Courier">Courier</option>
-            <option value="Inventory Manager">Inventory Manager</option>
+            <option value="Manager">Manager</option>
             </select><br>
 
             <button type="submit" id="submitBtn">Sign Up</button>
