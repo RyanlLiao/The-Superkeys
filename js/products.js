@@ -1,72 +1,63 @@
-var a_key = 'bee2edb3fb146ef46d8bcdf1ec4cf9f7';
-var s_num = 'u24730841';
+var a_key = 'f61891d740ceb2539535bd06a1c7936f';
 
 function displayProducts(data) {
     console.log("Displaying products")
-    var container = document.getElementById("product-list");
-    // var container = document.getElementById("product-grid");
+    var container = document.querySelector(".product-grid");
     if (!container) {
-        console.error("Product list container not found");
+        console.error("Product grid container not found");
         return;
     }
 
     container.innerHTML = "";
 
+    console.log(data);
+
     for (var i = 0; i < data.length; i++) {
         var product = data[i];
-        var price = (product.final_price);
-        console.log(product.brand);
+
+         var images = JSON.parse(product.images);
+         var mainImage = images.length > 0 ? images[0] : "img/placeholder.jpg";
+
         var card = ''
             + '<div class="product">'
-            + ' <a href="view.php?id=' + product.id + '"><img src="' + product.image_url + '"alt="' + product.title + '" class="productImg"></a>'
-            + '<p style = "font-size: large; font-family: Monaco; ">' + product.title + ' <br><br> ~Brand: ' + product.brand + '</p>'
-            + '<p style = "font-size: large; font-family: Monaco; ">' + currentCurrency + ' ' + price + '</p>'
-            + '<div class="product-actions">'
-            + '<a href="cart.php"><button class="add-to-cart"><img src="img/cart1.png" class="icon"> Add to Cart</button></a>'
-            + '<a href="wishlist.php"><button class="wishlist"><img src="img/heartV.png" class="icon"> Wishlist</button></a>'
-            + '</div>'
+            + '<a href="view.php?id=' +  product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
+            + '<a href="view.phpid=' + product.product_id + '"><h2>' + product.product_name + '</h2> </a>'
+            + '<h3>R' + product.price + '</h3>'
+            + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
+            + '<a href="wishlist.php"><button class = "add">Add to Wishlist</button></a>'
             + '</div>';
+        //edit add to wishlist functionality
         container.innerHTML += card;
     }
 
-    var currentTheme = localStorage.getItem("theme");
-    if (currentTheme) {
-        setTheme(currentTheme);
-    }
-
-    hideLoader();
 }
 
 function fetchProducts() {
-    showLoader();
 
-    var searchInput = document.getElementById("search-input").value.toLowerCase();
-    var brandFilter = document.getElementById("brand-filter").value;
-    var priceFilter = document.getElementById("price-filter").value;
-    var sortOption = document.getElementById("sortBtn").value;
-    var countryFilter = document.getElementById("country-filter").value;
+    var searchInput = document.querySelector(".search-box input[name='q']").value.toLowerCase();
+    var categoryFilter = document.querySelector("select[name='category']").value;
+    var typeFilter = document.querySelector("select[name='type']").value;
+    var brandFilter = document.querySelector("select[name='brand']").value;
+    var priceFilter = document.querySelector("select[name='filter-by-price']").value;
+    var sortByPrice = document.querySelector("select[name='sort-by-price']").value;
 
-    var sortField = "title";
-    var sortOrder = "ASC";
+    // var sortField = "title";
+    // var sortOrder = "ASC";
 
-    if (sortOption === "Price: Low to High") {
-        sortField = "final_price";
-        sortOrder = "ASC";
-    } else if (sortOption === "Price: High to Low") {
-        sortField = "final_price";
-        sortOrder = "DESC";
-    } else if (sortOption === "Newest Arrivals") {
-        sortField = "date_first_available";
-        sortOrder = "DESC";
-    }
+    // if (sortPrice === "Low to High") {
+    //     sortField = "final_price";
+    //     sortOrder = "ASC";
+    // } else if (sortOption === "High to Low") {
+    //     sortField = "final_price";
+    //     sortOrder = "DESC";
+    // }
+
+    // AMAAIIIIII!!!!????
 
     var requestBody = {
+        type: "Products",
         apikey: a_key,
-        type: "GetAllProducts",
-        return: ["id", "brand", "title", "image_url", "department", "final_price", "country_of_origin", "date_first_available", "categories"],
-        limit: 50,
-        sort: sortField,
-        order: sortOrder
+        return: "*"
     };
 
     if (searchInput) {
@@ -79,7 +70,7 @@ function fetchProducts() {
 
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "../../api.php", true);
+    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);
 
     xhr.onreadystatechange = function () {
 
@@ -87,52 +78,30 @@ function fetchProducts() {
 
         if (xhr.readyState == 4 && xhr.status == 200) {
             console.log("condition accepted");
+            console.log("Raw response: ", xhr.responseText);
+
 
             var response = JSON.parse(xhr.responseText);
             console.log(response);
             if (response.status == 'success') {
                 var data = response.data;
 
-                if (priceFilter === "Under R1000") {
-                    data = data.filter(function (p) { return p.final_price < 1000; });
-                } else if (priceFilter === "R1000 - R1500") {
-                    data = data.filter(function (p) { return p.final_price >= 1000 && p.final_price <= 1500; });
-                } else if (priceFilter === "Above R1500") {
-                    data = data.filter(function (p) { return p.final_price > 1500; });
-                }
-
-                if (brandFilter && brandFilter !== "Filter by Brand") {
-                    data = data.filter(function (p) {
-                        return p.brand && p.brand.toLowerCase() === brandFilter.toLowerCase();
-                    });
-                }
-
-                if (countryFilter && countryFilter !== "Filter by Country") {
-                    data = data.filter(function (p) {
-                        return p.country_of_origin && p.country_of_origin.toLowerCase() === countryFilter.toLowerCase();
-                    });
-                }  
+                //FILTER LOGIC
 
                 console.log("condition accepted");
-                // products = response.data;
                 products = data;
 
-                // console.log(products[1].final_price);
-                // console.log(products[1].title);
                 console.log("Products fetched, calling DISPLAY");
 
                 displayProducts(products);
 
-                //fetchConversionRates();
             } else {
                 console.log("API returned error:", response.message);
-                // hideLoader();
             }
         } else {
             console.log("Failed to fetch products. Status:", xhr.status, xhr.readyState);
-            // hideLoader();
         }
-        hideLoader();
+
     };
 
     xhr.send(JSON.stringify(requestBody));
@@ -140,49 +109,15 @@ function fetchProducts() {
 
 window.onload = function () {
     console.log("Page loaded. Fetching products...");
-    
-    var apikey = localStorage.getItem("apikey");
-  var username = localStorage.getItem("username");
-
-  if (!apikey || !username) {
-      window.location.href = "login.php";
-      return; 
-  }
-
-  var userDisplay = document.getElementById("user-display");
-  var userLink = document.getElementById("user-link");
-
-  if (userDisplay && userLink) {
-      userDisplay.style.display = "inline-block";
-      userLink.textContent = "Welcome, " + username
-  }
-
-  document.getElementById("logout-link").style.display = "inline-block";
-  document.getElementById("signup-link").style.display = "none";
-  document.getElementById("login-link").style.display = "none";
-    
     fetchProducts();
 
-    var currencySelector = document.getElementById("currency-selector");
 
-    document.getElementById("search-input").addEventListener("keyup", function (event) {
-        if (event.keyCode === 13) fetchProducts();
-    });
-    loadFilterOptions();
-
-    document.getElementById("brand-filter").addEventListener("change", fetchProducts);
-    document.getElementById("price-filter").addEventListener("change", fetchProducts);
-    document.getElementById("sortBtn").addEventListener("change", fetchProducts);
-    document.getElementById("country-filter").addEventListener("change", fetchProducts);
-
-
-    if (currencySelector) {
-        currencySelector.addEventListener("change", function () {
-            currentCurrency = this.value;
-            displayProducts(products);
-        });
-    } else {
-        console.error("Currency selector not found");
-    }
+    // document.getElementById("search-input").addEventListener("keyup", function (event) {
+    //     if (event.keyCode === 13) fetchProducts();
+    // });
+    // document.getElementById("brand-filter").addEventListener("change", fetchProducts);
+    // document.getElementById("price-filter").addEventListener("change", fetchProducts);
+    // document.getElementById("sortBtn").addEventListener("change", fetchProducts);
+    // document.getElementById("country-filter").addEventListener("change", fetchProducts);
 
 };

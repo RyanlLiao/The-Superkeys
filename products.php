@@ -7,51 +7,12 @@
     <link rel="stylesheet" href="css/products.css">
 </head>
 
-    <header class="headerrr">
-                <div class="header-container">
-                    <img src="img/logo.png" alt="Logo" class="pLogo">
-                    <nav class="navBar">
-                        <ul>
-                            <li id="logout-link" style="display: none;"><img src="img/Login.png" alt="Login" class="icon"> <br> Logout</a></li>
-                            <!-- on click function for logginhh out! -->
-                            <li id="login-link"><a href="login.php"><img src="img/Login.png" alt="Login" class="icon">
-                                    <br> Login</a></li>
-                            <li id="wishlist-link"><a href="wishlist.php"><img src="img/wishlist.png" alt="Order"
-                                        class="icon"> <br> Wishlist</a></li>
-                            <li id="signup-link"><a href="signup.php"><img src="img/SignUp.png" alt="Order"
-                                        class="icon"> <br> Sign Up</a></li>
-                            <li id="theme-link"><img src="img/light_mode.png" alt="Order"
-                                        class="icon"> <br>Theme</li>
-                            <!-- On click for theme!!!! -->
-                        </ul>
-                    </nav>
-                </div>
-    </header>
+<?php include 'header.php'; ?>
     
 
 <body>
-    <div class = "products-filter">
-        <img src="img/mobile_devices.png" alt="Mobile Devices" />
-        <img src="img/laptops.webp" alt="Laptops" />
-        <img src="img/speakers.webp" alt="Speakers" />
-        <img src="img/headphones.webp" alt="Headphones" />
-        <img src="img/Data_Storage.webp" alt="Data Storage" />
-        <img src="img/monitors.jpg" alt="Monitors" />
-        <img src="img/accessories3.jpg" alt="Accessories" />
-    </div>
 
-    <!-- ON CLICK FUNCTIONS FOR FILTERING -->
-
-    <div class = "brands-filter">
-        <img src="img/amzon.png" alt="Amazon" />
-        <img src="img/apple.png" alt="Apple" />
-        <img src="img/asus.png" alt="Asus" />
-        <img src="img/Dell.png" alt="Dell" />
-        <img src="img/hauwei.png" alt="Hauwei" />
-        <img src="img/samsung.png" alt="Samsung" />
-        <img src="img/takealot.jpg" alt="Takealot" />
-    </div>
-
+<div class ="search-and-filter">
     <div class="search-container">
         <form class="search-box">
             <input type="text" name="q" placeholder="Search products...">
@@ -60,10 +21,50 @@
         </form>
     </div>
 
-    <p>PRODUCTS LOADED FROM API...</p>
+    <div class="filters">
+            <select name="category">
+                <option value="">All Categories</option>
+                <option value="computing">Computing Devices</option>
+                <option value="audio">Audio-Visual</option>
+                <option value="accessories">Accessories</option>
+            </select>
+
+            <select name="type">
+                <option value="">All Types</option>
+                <option value="Headphones">Headphones</option>
+                <option value="Watch">Watch</option>
+                <option value="Laptops">Laptops</option>
+            </select>
+
+            <select name="brand">
+                <option value="">All Brands</option>
+                <option value="samsung">Samsung</option>
+                <option value="apple">Apple</option>
+                <option value="sony">Sony</option>
+            </select>
+
+            <select name="filter-by-price">
+                <option value="">Range</option>
+                <option value="100-200">100-200</option>
+                <option value="200-300">200-300</option>
+                <option value="300-400">300-400</option>
+            </select>
+
+            <!-- WHAT PRICE ARE THESE BASED OFF OF ... minimum price -->
+
+            <select name="sort-by-price">
+                <option value="">Sort By</option>
+                <option value="ASC">Low to High</option>
+                <option value="DESC">High to Low</option>
+            </select>
+    </div>
+</div>
     
-
-
-
+<div class ="product-container">
+    <div class = "product-grid" ></div>
+</div> 
+<script src = "js\products.js"></script>
 </body>
+
+
 </html>

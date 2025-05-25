@@ -2,6 +2,7 @@ body {
     text-align: center;
     margin: 5px;
     padding: 0;
+    background-color: #F7F7F3;
 }
 
 .headerrr {
@@ -21,8 +22,8 @@ body {
 }
 
 .pLogo {
-    width: 250px;
-    height: auto;
+    width: auto;
+    height: 155px;
     border-radius: 5px;
 }
 
@@ -57,45 +58,6 @@ body {
     background-color: #00171F;
 }
 
-.products-filter {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    justify-content: space-between;
-    align-items: center;
-    overflow-x: auto;
-    padding: 10px;
-    
-}
-
-.products-filter img {
-    height: 150px;
-    object-fit: cover;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.brands-filter {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    justify-content: flex-start;
-    align-items: center;
-    overflow-x: auto;
-    padding: 5px;
-    max-width: 60%;
-    margin: auto;
-    
-}
-
-.brands-filter img {
-    height: 80px;
-    width: auto;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
 .search-container {
     display: flex;
     justify-content: center;
@@ -107,7 +69,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 25px;
     overflow: hidden;
-    width: 45%;
+    width: 75%;
 }
 
 .search-box input[type="text"] {
@@ -132,3 +94,121 @@ body {
 .search-box img{
     width: 15px;
 }
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 30px auto;
+    width: 80%;
+    justify-content: center;
+}
+
+.filters select {
+    flex: 1 1 180px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+.product-container {
+    max-width: 1600px;
+    margin: 10px auto;
+    padding: 10px;
+    display: flex;
+    justify-content: center; 
+    
+}
+
+.product-grid {
+    display: flex; 
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+    width: 95%;
+    max-width: 1200px;
+    margin: 5px auto;
+    box-sizing: border-box;
+    justify-items: center;
+}
+
+.product {
+    flex: 1 1 200px; 
+    max-width: 250px;
+    height: auto;
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: small;
+    position: relative;
+}
+
+.productImg{
+    width:90%;
+    border-radius: 5px;
+    transition: transform 0.3s ease;
+}
+
+.productImg:hover{
+    transform: scale(1.1);
+}
+
+.add{
+    width: 60%;
+    padding: 8px;
+    background-color: #003459;
+    color: #F7F7F3;
+    border: none;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add:hover{
+    background-color: #00243D;
+}
+
+.product h2,
+.product h3,
+.product p {
+    margin: 10px 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: #333;
+}
+
+.product h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.product h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    
+}
+
+.product p {
+    font-size: 0.9rem;
+    color: #7b7979;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.product a {
+    text-decoration: none;
+
+}
+
+.product a:hover {
+    color: #003459; 
+}
+
+
+
+
