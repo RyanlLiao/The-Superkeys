@@ -18,22 +18,44 @@ function displayProducts(data) {
         var images = JSON.parse(product.images);
         var mainImage = images.length > 0 ? images[0] : "img/placeholder.jpg";
 
-        var category = JSON.parse(product.catgeory);
+        var category = JSON.parse(product.Category);
 
         var card = ''
-            + '<div class="product" ' 
-            + 'data-brand="' + product.brand + '" data-category="' + category[0] + '" data-type="' + category[1] + '">'
+            + '<div class="product" '
+            + 'data-brand="' + product.retailer_id + '" data-category="' + category[0] + '" data-type="' + category[1] + '">'
             + '<a href="view.php?id=' + product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
             + '<a href="view.phpid=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
             + '<h3 id="product_price">R' + product.price + '</h3>'
             + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
             + '<a href="wishlist.php"><button class = "add">Add to Wishlist</button></a>'
             + '</div>';
-
         //edit add to wishlist functionality
         container.innerHTML += card;
     }
 
+}
+
+function getTypes(category,callback){
+    var types = new XMLHttpRequest();
+    types.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    types.setRequestHeader("Content-type","application/json");
+
+    var body = JSON.stringify({
+        "type":"GetDistinct",
+        "apikey":a_key,
+        "category":category
+    });
+
+    types.onload = function(){
+        if(types.readyState === 4 && types.status === 200){
+            var response = JSON.parse(types.responseText);
+            callback(response);
+        }
+        else    
+            console.error("Error: ",types.responseText);
+    }
+
+    types.send(body);
 }
 
 function fetchProducts() {
@@ -59,7 +81,7 @@ function fetchProducts() {
     // AMAAIIIIII!!!!????
 
     var requestBody = {
-        type: "Products",
+        type: "GetAllProducts",
         apikey: a_key,
         return: "*"
     };
@@ -74,7 +96,7 @@ function fetchProducts() {
 
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);  //CompareIt/The-Superkeys
 
     xhr.onreadystatechange = function () {
 
@@ -104,6 +126,7 @@ function fetchProducts() {
             }
         } else {
             console.log("Failed to fetch products. Status:", xhr.status, xhr.readyState);
+            //console.log("response", xhr.responseText);
         }
 
     };
@@ -127,6 +150,7 @@ window.onload = function () {
 };
 
 function search() {
+    //console.log("Searching...");
     var input = document.querySelector(".search_input").value;
     var searchString = input.toLowerCase();
 
@@ -139,7 +163,7 @@ function search() {
         if (!compare.includes(searchString))
             products[i].style.display = "none";
         else {
-            products[i].style.display = "flex";
+            products[i].style.removeProperty("display");
             found = true;
         }
     }
@@ -150,31 +174,33 @@ function search() {
 function notfound(found) {
     var none = document.querySelector(".not-found");
 
-    if (!found)
-        none.style.display = 'flex';
+    if (!found) {
+        none.style.removeProperty("display");
+    }
     else
         none.style.display = 'none';
 
 }
 
-function applyFilter() {
-    var price = document.querySelector("[name='filter-by-price']").value;
-    var brand = document.querySelector("[name='brand']").value;
-    var category = document.querySelector("[name='category']").value;
-    var type = document.querySelector("[name='type']").value;
 
-    if (price !== "")
-        priceFilter(price);
+// function applyFilter() {
+//     var price = document.querySelector("[name='filter-by-price']").value;
+//     var brand = document.querySelector("[name='brand']").value;
+//     var category = document.querySelector("[name='category']").value;
+//     var type = document.querySelector("[name='type']").value;
 
-    if (brand !== "")
-        brandFilter(brand);
+//     if (price !== "")
+//         priceFilter(price);
 
-    if (category !== "")
-        categoryFilter(category);
+//     if (brand !== "")
+//         brandFilter(brand);
 
-    if (type !== "")
-        typeFilter(type);
-}
+//     if (category !== "")
+//         categoryFilter(category);
+
+//     if (type !== "")
+//         typeFilter(type);
+// }
 
 function priceFilter(range) {
     var min = parseInt(range.substring(0, range.indexOf('-')));
@@ -186,7 +212,7 @@ function priceFilter(range) {
         var price = parseFloat((product[i].querySelector("#product_price").innerText).substring(1));
 
         if (min <= price && price <= max) {
-            product[i].style.display = "flex";
+            product[i].style.removeProperty("display");
             found = true;
         }
         else
@@ -200,14 +226,14 @@ function brandFilter(brand) {
     var product = document.querySelectorAll(".product");
     var found = false;
 
-    for(var i = 0; i < product.length; i++){
+    for (var i = 0; i < product.length; i++) {
         var productBrand = product[i].getAttribute("data-brand");
 
-        if(brand.toLowerCase() == productBrand.toLowerCase()){
-            product[i].style.display = "flex";
+        if (brand.toLowerCase() == productBrand.toLowerCase()) {
+            product[i].style.removeProperty("display");
             found = true;
         }
-        else    
+        else
             product[i].style.display = "none";
     }
 
@@ -215,37 +241,41 @@ function brandFilter(brand) {
 }
 
 function categoryFilter(category) {
+    console.log("Filtering by category...");
+    console.log(category);
     var product = document.querySelectorAll(".product");
     var found = false;
 
-    for(var i = 0; i < product.length; i++){
+    for (var i = 0; i < product.length; i++) {
         var productCat = product[i].getAttribute("data-category");
 
-        if(category.toLowerCase() == productCat.toLowerCase()){
-            product[i].style.display = "flex";
+        if (category.toLowerCase() == productCat.toLowerCase()) {
+            product[i].style.removeProperty("display");
             found = true;
         }
-        else    
+        else
             product[i].style.display = "none";
     }
 
     notfound(found);
 }
 
-function typeFilter(type) { 
+function typeFilter(type) {
     var product = document.querySelectorAll(".product");
     var found = false;
 
-    for(var i = 0; i < product.length; i++){
+    for (var i = 0; i < product.length; i++) {
         var productType = product[i].getAttribute("data-type");
 
-        if(type.toLowerCase() == productType.toLowerCase()){
-            product[i].style.display = "flex";
+        if (type.toLowerCase() == productType.toLowerCase()) {
+            product[i].style.removeProperty("display");
             found = true;
         }
-        else    
+        else
             product[i].style.display = "none";
     }
-    
+
     notfound(found);
+}
+
 }
