@@ -12,6 +12,8 @@
     <meta charset="UTF-8">
     <title>Manager Dashboard</title>
     <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/graphManager.js" defer></script>
 </head>
 <body>
 
@@ -59,6 +61,10 @@
     <div class="card">
         <h2>Price History</h2>
         <p>Chart or detailed insights can go here.</p>
+    </div>
+
+    <div>
+        <canvas id="myChart"></canvas>
     </div>
 </div>
 

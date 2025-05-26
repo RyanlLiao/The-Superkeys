@@ -6,7 +6,6 @@
     <title>Login</title>
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="css/products.css">
-    <script src="js/login.js"></script>
 </head>
 <body>
 
@@ -30,6 +29,7 @@
         <p>Don't have an account? <a href="signup.php">Sign up here</a></p>
     </div>
 
+    <script src="js/login.js"></script>
     
 </body>
 

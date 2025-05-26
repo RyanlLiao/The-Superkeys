@@ -1,4 +1,4 @@
-var url = "http://localhost/api.php";
+var url = "http://localhost/The-Superkeys/backend/api.php";
 
 document.getElementById('loginForm').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -21,9 +21,9 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     }
 
     var formData = {
-        type: "login",          //might be capital L
-        email: email,
-        password: password
+        type: "Login",          //might be capital L
+        "email": email,
+        "hashed_password": password
     };
 
     var req = new XMLHttpRequest();
@@ -38,6 +38,9 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
 
                 if (json.status === "success") {
                     const data = json.data;
+
+                    localStorage.setItem("api_key", data.apikey);
+                    localStorage.setItem("user_type", data.user_type);
 
                     alert("Successfully logged in! Welcome");
                     window.location.href = "products.php";
