@@ -41,7 +41,27 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-        $types = ["Register", "Login", "GetAllProducts","GetProduct" ,"AddProduct", "RemoveProduct", "AddRetailer", "RemoveRetailer", "GetReviews", "AddReview", "RemoveReview", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist", "UpdatePrice"];        //might add admin
+        $types = [
+            "Register",
+            "Login",
+            "GetAllProducts",
+            "GetProduct",
+            "AddProduct",
+            "GetDistinct",
+            "RemoveProduct",
+            "AddRetailer",
+            "RemoveRetailer",
+            "GetReviews",
+            "AddReview",
+            "RemoveReview",
+            "AddComment",
+            "RemoveComment",
+            "GetWishlist",
+            "AddWishlist",
+            "RemoveWishlist",
+            "UpdatePrice",
+            "Count"
+        ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -218,8 +238,27 @@ class API
 
                 if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
-                    
-                return $this->response("HTTP/1.1 200 OK", "success", "", $this->getProduct($data['product_id']));
+
+                $result = $this->getProduct($data['product_id']);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
+
+            case "GetDistinct":
+                $apikey = $data['apikey'];
+
+                if (!$this->checkApikey($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+                $result = $this->getDistinct($data);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
+
+            case "Count":
+                $apikey = $data['apikey'];
+
+                if (!$this->checkApikey($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+                $result = $this->count($data);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
@@ -368,28 +407,38 @@ class API
         }
     }
 
-    private function getWhitelist()
+    private function getWhitelist($type)
     {
-        $allowed = [
-            "product_id",
-            "product_name",
-            "description",
-            "Category",
-            "availability",
-            "average_rating",
-            "images",
-            "retailer",
-            "price",
-            "price_min",
-            "price_max",
-        ];
+        if ($type == "product") {
+            $allowed = [
+                "product_id",
+                "product_name",
+                "description",
+                "Category",
+                "availability",
+                "average_rating",
+                "images",
+                "retailer",
+                "price",
+                "price_min",
+                "price_max",
+            ];
+        }
+
+        if($type == "count"){
+            $allowed = [
+                "Users",
+                "Products",
+                "Reviews",
+            ];
+        }
         return $allowed;
     }
 
     //this will get products from the database - only manager apikeys will be valid
     private function getProducts($data)
     {
-        $allowed = $this->getWhitelist();
+        $allowed = $this->getWhitelist("product");
 
         //input validation
         $return = $data["return"] === "*" ? "*" : array_intersect($data["return"], $allowed);
@@ -452,7 +501,7 @@ class API
         $query = "SELECT $select FROM Product P NATURAL JOIN Sold_by S NATURAL JOIN (SELECT product_id, MIN(price) as price FROM Sold_by GROUP BY product_id) T $whereClause  ORDER BY RAND()  $limitClause";
 
         $statement = $this->connection->prepare($query);
-         //var_dump($query);
+        // var_dump($query);
 
         if (!empty($parameters))
             $statement->bind_param($vartypes, ...$parameters);
@@ -513,7 +562,7 @@ class API
             $category
         );
 
-        echo "parameters bound\n";
+        // echo "parameters bound\n";
         if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
 
@@ -521,7 +570,7 @@ class API
 
         //now update product specialisation
         $category = $product['category'][0];
-        //var_dump($category);
+        // var_dump($category);
         $placeholders = "?";
         $vartypes = "";
         $column = "";
@@ -595,6 +644,76 @@ class API
         return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
+    private function getDistinct($data)
+    {
+
+        switch ($data['category']) {
+            case "Audio_Visual_Equipment":
+                $category = "Audio_Visual_Equipment";
+                break;
+            case "Computing_Devices":
+                $category = "Computing_Devices";
+                break;
+            case "Electronic_Accessories":
+                $category = "Electronic_Accessories";
+                break;
+            default:
+                return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+        }
+        ;
+
+        $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$category%'";
+        // var_dump($query);
+        $statement = $this->connection->prepare($query);
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't remove product", null);
+
+        $result = $statement->get_result();
+        $result = $result->fetch_all(MYSQLI_ASSOC);
+
+        return $result;
+    }
+
+    private function count($data)
+    {
+       // echo "COUNTING...";
+        $type = $data['count_type'];
+        $allowed = $this->getWhitelist($type);
+        //var_dump($allowed);
+
+        $type = array_intersect($allowed,[$data["count"]]);
+       // var_dump($type);
+        if(empty($type))
+            return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+
+        $table = "";
+
+        switch($type[0]){
+            case "Users":
+                $table = "Person";
+                break;
+            
+            case "Products":
+                $table = "Product";
+                break;
+            case "Reviews":
+                $table = "Review";
+                break;
+        };
+
+        $query = "SELECT Count(*) as count FROM $table";
+        $statement = $this->connection->prepare($query);
+       // var_dump($query);
+        if(!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}",null);
+
+        $result = $statement->get_result();
+        $result = $result->fetch_assoc();
+
+       // var_dump($result);
+        return $result["count"];
+    }
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
