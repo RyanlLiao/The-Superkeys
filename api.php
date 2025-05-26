@@ -345,7 +345,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password,name FROM Person WHERE email = ?";
+        $query = "SELECT api_key, salt, hashed_password,name FROM Person WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
