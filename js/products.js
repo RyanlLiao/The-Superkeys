@@ -1,4 +1,4 @@
-var a_key = 'f61891d740ceb2539535bd06a1c7936f';
+var a_key = '1a8eeccd5b43834a18870560a229cc4a6862ef492e808536a65055ca46eaba4f';
 
 function displayProducts(data) {
     // console.log("Displaying products")
@@ -59,6 +59,28 @@ function getTypes(category, callback) {
     types.send(body);
 }
 
+function getRetailers(callback){
+    var ret = new XMLHttpRequest();
+    ret.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    ret.setRequestHeader("Content-type", "application/json");
+
+    var body = JSON.stringify({
+        "type":"GetDistinct",
+        "apikey":a_key,
+        'distinct':'retailer'
+    });
+
+    ret.onload = function(){
+        if(ret.readyState === 4 && ret.status === 200){
+            var response = JSON.parse(ret.responseText);
+            callback(response.data);
+        }
+        else
+         console.error("Error: ", ret.responseText);
+    }
+
+    ret.send(body);
+}
 
 function fetchProducts() {
 
@@ -73,11 +95,11 @@ function fetchProducts() {
 
     xhr.onreadystatechange = function () {
 
-        //   console.log("Current state:", xhr.readyState, "Current status:", xhr.status);
+          //console.log("Current state:", xhr.readyState, "Current status:", xhr.status);
 
         if (xhr.readyState == 4 && xhr.status == 200) {
             // console.log("condition accepted");
-            // console.log("Raw response: ", xhr.responseText);
+             //console.log("Raw response: ", xhr.responseText);
 
 
             var response = JSON.parse(xhr.responseText);
@@ -108,6 +130,10 @@ function fetchProducts() {
 window.onload = function () {
     // console.log("Page loaded. Fetching products...");
     fetchProducts();
+    getRetailers(function(names){
+        //console.log(names);
+        var brandFilter = document.querySelector
+    })
 };
 
 function search() {
@@ -180,6 +206,7 @@ function priceFilter(range) {
 }
 
 function brandFilter(brand) {
+    console.log(brand);
     if (brand === "") {
         clearFilter(brandHidden);
         return;
