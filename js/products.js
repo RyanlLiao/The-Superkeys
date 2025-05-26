@@ -1,7 +1,7 @@
 var a_key = 'f61891d740ceb2539535bd06a1c7936f';
 
 function displayProducts(data) {
-    console.log("Displaying products")
+    // console.log("Displaying products")
     var container = document.querySelector(".product-grid");
     if (!container) {
         console.error("Product grid container not found");
@@ -10,7 +10,7 @@ function displayProducts(data) {
 
     container.innerHTML = "";
 
-    console.log(data);
+    //console.log(data);
 
     for (var i = 0; i < data.length; i++) {
         var product = data[i];
@@ -25,7 +25,7 @@ function displayProducts(data) {
             + 'data-brand="' + product.retailer_id + '" data-category="' + category[0] + '" data-type="' + category[1] + '">'
             + '<a href="view.php?id=' + product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
             + '<a href="view.phpid=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
-            + '<h3 id="product_price">From: R' + product.price + '</h3>'
+            + '<h3 id="product_price">R' + product.price + '</h3>'
             + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
             + '<a href="wishlist.php"><button class = "add">Add to Wishlist</button></a>'
             + '</div>';
@@ -37,7 +37,7 @@ function displayProducts(data) {
 
 function getTypes(category, callback) {
     var types = new XMLHttpRequest();
-    types.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    types.open("POST", "/COS221/api.php", true);
     types.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({
@@ -50,6 +50,7 @@ function getTypes(category, callback) {
         if (types.readyState === 4 && types.status === 200) {
             var response = JSON.parse(types.responseText);
             callback(response.data);
+            callback(response.data);
         }
         else
             console.error("Error: ", types.responseText);
@@ -57,6 +58,7 @@ function getTypes(category, callback) {
 
     types.send(body);
 }
+
 
 function fetchProducts() {
 
@@ -67,19 +69,19 @@ function fetchProducts() {
     };
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);  //CompareIt/The-Superkeys
+    xhr.open("POST", "/COS221/api.php", true);  //CompareIt/The-Superkeys
 
     xhr.onreadystatechange = function () {
 
-        console.log("Current state:", xhr.readyState, "Current status:", xhr.status);
+        //   console.log("Current state:", xhr.readyState, "Current status:", xhr.status);
 
         if (xhr.readyState == 4 && xhr.status == 200) {
-            console.log("condition accepted");
-            console.log("Raw response: ", xhr.responseText);
+            // console.log("condition accepted");
+            // console.log("Raw response: ", xhr.responseText);
 
 
             var response = JSON.parse(xhr.responseText);
-            console.log(response);
+            // console.log(response);
             if (response.status == 'success') {
                 var data = response.data;
 
@@ -94,7 +96,7 @@ function fetchProducts() {
                 console.log("API returned error:", response.message);
             }
         } else {
-            console.log("Failed to fetch products. Status:", xhr.status, xhr.readyState);
+            // console.log("Failed to fetch products. Status:", xhr.status, xhr.readyState);
             //console.log("response", xhr.responseText);
         }
 
@@ -104,7 +106,7 @@ function fetchProducts() {
 }
 
 window.onload = function () {
-    console.log("Page loaded. Fetching products...");
+    // console.log("Page loaded. Fetching products...");
     fetchProducts();
 };
 
@@ -156,6 +158,11 @@ function priceFilter(range) {
         return;
     }
 
+    if (range === "") {
+        clearFilter(priceHidden);
+        return;
+    }
+
     var min = parseInt(range.substring(0, range.indexOf('-')));
     var max = parseInt(range.substring(range.indexOf('-')));
     var product = document.querySelectorAll(".product");
@@ -169,7 +176,10 @@ function priceFilter(range) {
             found = true;
         }
         else {
+        else {
             product[i].style.display = "none";
+            priceHidden.push(product[i]);
+        }
             priceHidden.push(product[i]);
         }
     }
@@ -178,6 +188,11 @@ function priceFilter(range) {
 }
 
 function brandFilter(brand) {
+    if (brand === "") {
+        clearFilter(brandHidden);
+        return;
+    }
+
     if (brand === "") {
         clearFilter(brandHidden);
         return;
@@ -194,7 +209,10 @@ function brandFilter(brand) {
             found = true;
         }
         else {
+        else {
             product[i].style.display = "none";
+            brandHidden.push(product[i]);
+        }
             brandHidden.push(product[i]);
         }
     }
@@ -203,6 +221,11 @@ function brandFilter(brand) {
 }
 
 function categoryFilter(category) {
+    if (category == "") {
+        clearFilter(categoryHidden);
+        return;
+    }
+
     if (category == "") {
         clearFilter(categoryHidden);
         return;
@@ -219,7 +242,38 @@ function categoryFilter(category) {
             found = true;
         }
         else {
+        else {
             product[i].style.display = "none";
+            categoryHidden.push(product[i]);
+        }
+    }
+
+    //setup types based on the category selected
+    getTypes(category, function (typeList) {
+        var types = [];
+
+        typeList.forEach(type => {
+            type.Category = JSON.parse(type.Category);
+            types.push(type.Category[1]);
+        });
+
+        // console.log(types);
+        var typeFilter = document.querySelector("[name='type']");
+        typeFilter.innerHTML = "";
+
+        var default_option = document.createElement("option");
+        default_option.value = "";
+        default_option.innerText = "All Types";
+        typeFilter.appendChild(default_option);
+
+        for (var i = 0; i < typeList.length; i++) {
+            var option = document.createElement("option");
+            option.value = types[i];
+            option.innerText = types[i].replace("_", " ");
+
+            typeFilter.appendChild(option);
+        }
+    });
             categoryHidden.push(product[i]);
         }
     }
@@ -260,6 +314,11 @@ function typeFilter(type) {
         return;
     }
 
+    if (type === "") {
+        clearFilter(typeHidden);
+        return;
+    }
+
     var product = document.querySelectorAll(".product");
     var found = false;
 
@@ -271,7 +330,10 @@ function typeFilter(type) {
             found = true;
         }
         else {
+        else {
             product[i].style.display = "none";
+            typeHidden.push(product[i]);
+        }
             typeHidden.push(product[i]);
         }
     }

@@ -6,6 +6,7 @@
     <title>Signup</title>
     <link rel="stylesheet" href="css/signup.css">
     <link rel="stylesheet" href="css/products.css">
+    <script src="js/signup.js"></script>
 </head>
 <body>
 
