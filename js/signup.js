@@ -1,4 +1,4 @@
-var url = "http://localhost/api.php";
+var url = "/CompareIt/The-Superkeys/api.php";
 
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('signupForm').addEventListener('submit', function (event) {
@@ -35,13 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var formData = {
             "type": "Register",
-            "custName": name,
-            "custSurname": surname,
-            "custEmail": email,
-            "custPassword": password,
-            "custType": type,
-            "custUsername": username,
-            "custPhone": phone
+            "name": name,
+            "surname": surname,
+            "email": email,
+            "password": password,
+            "user_type": type,
+            "username": username,
+            "phone_number": phone
         };
 
         var req = new XMLHttpRequest();
@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(req.responseText);
                 console.log(req.status);
 
-                if (req.status === 201) {
+                if (req.status === 200) {
+                    console.log(req.responseText);
                     var json = JSON.parse(req.responseText);
                     if (json.status === "success") {
                         alert("Successful registration!\n\nYour API key is: " + json.data.apikey);
@@ -61,12 +62,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     } else {
                         errorMessage.textContent = "Registration error: " + json.message;
                         errorMessage.style.display = 'block';
-                        console.error("Error:", json.message);
+                        console.log("Error:", json.message);
                     }
                 } else {
                     errorMessage.textContent = "An error occurred. Please try again later.";
                     errorMessage.style.display = 'block';
-                    console.error("Error:", req.statusText);
+                    // console.log("Error:", req.statusText);
                 }
             }
         };

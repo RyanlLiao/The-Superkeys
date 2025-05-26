@@ -37,7 +37,7 @@ function displayProducts(data) {
 
 function getTypes(category, callback) {
     var types = new XMLHttpRequest();
-    types.open("POST", "/COS221/api.php", true);
+    types.open("POST", "/CompareIt/The-Superkeys/api.php", true);
     types.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({
@@ -50,7 +50,7 @@ function getTypes(category, callback) {
         if (types.readyState === 4 && types.status === 200) {
             var response = JSON.parse(types.responseText);
             callback(response.data);
-            callback(response.data);
+           // callback(response.data);
         }
         else
             console.error("Error: ", types.responseText);
@@ -69,7 +69,7 @@ function fetchProducts() {
     };
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/COS221/api.php", true);  //CompareIt/The-Superkeys
+    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);  //CompareIt/The-Superkeys
 
     xhr.onreadystatechange = function () {
 
@@ -158,11 +158,6 @@ function priceFilter(range) {
         return;
     }
 
-    if (range === "") {
-        clearFilter(priceHidden);
-        return;
-    }
-
     var min = parseInt(range.substring(0, range.indexOf('-')));
     var max = parseInt(range.substring(range.indexOf('-')));
     var product = document.querySelectorAll(".product");
@@ -176,10 +171,7 @@ function priceFilter(range) {
             found = true;
         }
         else {
-        else {
             product[i].style.display = "none";
-            priceHidden.push(product[i]);
-        }
             priceHidden.push(product[i]);
         }
     }
@@ -188,11 +180,6 @@ function priceFilter(range) {
 }
 
 function brandFilter(brand) {
-    if (brand === "") {
-        clearFilter(brandHidden);
-        return;
-    }
-
     if (brand === "") {
         clearFilter(brandHidden);
         return;
@@ -209,10 +196,7 @@ function brandFilter(brand) {
             found = true;
         }
         else {
-        else {
             product[i].style.display = "none";
-            brandHidden.push(product[i]);
-        }
             brandHidden.push(product[i]);
         }
     }
@@ -221,11 +205,6 @@ function brandFilter(brand) {
 }
 
 function categoryFilter(category) {
-    if (category == "") {
-        clearFilter(categoryHidden);
-        return;
-    }
-
     if (category == "") {
         clearFilter(categoryHidden);
         return;
@@ -242,7 +221,6 @@ function categoryFilter(category) {
             found = true;
         }
         else {
-        else {
             product[i].style.display = "none";
             categoryHidden.push(product[i]);
         }
@@ -251,13 +229,14 @@ function categoryFilter(category) {
     //setup types based on the category selected
     getTypes(category, function (typeList) {
         var types = [];
-
+       // console.log(typeList);
         typeList.forEach(type => {
             type.Category = JSON.parse(type.Category);
+           // console.log(type.Category[1]);
             types.push(type.Category[1]);
         });
 
-        // console.log(types);
+       // console.log(types);
         var typeFilter = document.querySelector("[name='type']");
         typeFilter.innerHTML = "";
 
@@ -266,37 +245,7 @@ function categoryFilter(category) {
         default_option.innerText = "All Types";
         typeFilter.appendChild(default_option);
 
-        for (var i = 0; i < typeList.length; i++) {
-            var option = document.createElement("option");
-            option.value = types[i];
-            option.innerText = types[i].replace("_", " ");
-
-            typeFilter.appendChild(option);
-        }
-    });
-            categoryHidden.push(product[i]);
-        }
-    }
-
-    //setup types based on the category selected
-    getTypes(category, function (typeList) {
-        var types = [];
-
-        typeList.forEach(type => {
-            type.Category = JSON.parse(type.Category);
-            types.push(type.Category[1]);
-        });
-
-        // console.log(types);
-        var typeFilter = document.querySelector("[name='type']");
-        typeFilter.innerHTML = "";
-
-        var default_option = document.createElement("option");
-        default_option.value = "";
-        default_option.innerText = "All Types";
-        typeFilter.appendChild(default_option);
-
-        for (var i = 0; i < typeList.length; i++) {
+        for (var i = 0; i < types.length; i++) {
             var option = document.createElement("option");
             option.value = types[i];
             option.innerText = types[i].replace("_", " ");
@@ -314,11 +263,6 @@ function typeFilter(type) {
         return;
     }
 
-    if (type === "") {
-        clearFilter(typeHidden);
-        return;
-    }
-
     var product = document.querySelectorAll(".product");
     var found = false;
 
@@ -330,10 +274,7 @@ function typeFilter(type) {
             found = true;
         }
         else {
-        else {
             product[i].style.display = "none";
-            typeHidden.push(product[i]);
-        }
             typeHidden.push(product[i]);
         }
     }
@@ -355,13 +296,13 @@ function priceSort(sort) {
     var product = document.querySelectorAll(".product");
     var array = Array.from(product);
 
-    array.sort(function(a,b){
+    array.sort(function (a, b) {
         var priceA = parseFloat((a.querySelector("#product_price").innerText).substring(1));
         var priceB = parseFloat((b.querySelector("#product_price").innerText).substring(1));
 
-        if(sort == "ASC")
+        if (sort == "ASC")
             return priceA - priceB;
-        else if(sort == "DESC")
+        else if (sort == "DESC")
             return priceB - priceA;
     });
 
@@ -372,4 +313,3 @@ function priceSort(sort) {
         container.appendChild(item);
     });
 }
-
