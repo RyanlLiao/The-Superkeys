@@ -97,10 +97,11 @@ class API
                 $surname = $data["surname"];
                 $email = $data["email"];
                 $password = $data["password"];
-                $confirm = $data["password_confirm"];
                 $user = $data["user_type"];
+                $username = $data["username"];
+                $phoneNum = $data["phone_number"];
 
-                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $confirm === "" || $user === "";
+                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $username === "" || $user === "" || $phoneNum === "" ;
                 $email_check = preg_match('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/', $email);
                 $pass_check = preg_match('/^((?=.*\W)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])).{8,}$/', $password);
 
@@ -118,6 +119,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
                 $apikey = bin2hex(random_bytes(16));
+                $this->addUser($firstname, $lastname, $email, $password, $phoneNum, $user, $username, $apikey);
                 return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
 
             case "Login":
