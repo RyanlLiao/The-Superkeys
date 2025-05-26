@@ -118,6 +118,15 @@ class API
                 if ($result)
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
+                $statement = $this->connection->prepare("SELECT * FROM Person WHERE phone_number = ?");
+                $statement->bind_param("s", $phoneNum);
+                $statement->execute();
+                $result = $statement->get_result()->fetch_assoc();
+
+                if ($result)
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Phone number already exists", null);
+
+
                 $apikey = bin2hex(random_bytes(16));
                 $this->addUser($name, $surname, $email, $password, $phoneNum, $user, $username, $apikey);
                 return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
@@ -500,7 +509,7 @@ class API
         $limitClause = ($limit != null) ? "LIMIT " . $limit : "";
 
         //get rows
-        $query = "SELECT $select FROM Product P NATURAL JOIN Sold_by S NATURAL JOIN (SELECT product_id, MIN(price) as price FROM Sold_by GROUP BY product_id) T $whereClause  ORDER BY RAND()  $limitClause";
+        $query = "SELECT $select FROM getProducts $whereClause $limitClause";
 
         $statement = $this->connection->prepare($query);
         // var_dump($query);
