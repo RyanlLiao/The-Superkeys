@@ -4,7 +4,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    background-color: #0b1a2d;
+    background-color: #ffffff;
     color: #ffffff;
 }
 
@@ -26,18 +26,19 @@ header img.logo {
 }
 
 .manage-products-wrapper {
-    background-color: #001f3f;
-    color: white;
+    background-color: #cbd1f7;
+    color: rgb(109, 136, 233);
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     width: 800px;
-    margin: 120px auto 40px auto; /* Top margin accounts for fixed header */
+    margin: 120px auto 40px auto;
 }
 
 h1 {
     margin-bottom: 40px;
     text-align: center;
+    color: #001f3f;
 }
 
 .search-section {
@@ -46,6 +47,7 @@ h1 {
 
 label {
     font-weight: 500;
+    color: rgb(100, 103, 195);
 }
 
 input[type="text"] {
@@ -57,20 +59,20 @@ input[type="text"] {
     background-color: #f0f4f8;
     color: #333;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .user-table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #0a1a2f;
+    background-color: #367cde;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.user-table th,
-.user-table td {
+.user-table th, .user-table td {
     padding: 12px 16px;
-    border-bottom: 1px solid #1f3a5c;
+    border-bottom: 1px solid #5785bd;
     text-align: left;
 }
 
@@ -81,7 +83,11 @@ input[type="text"] {
 }
 
 .user-table tr:hover {
-    background-color: #112b44;
+    background-color: #264d71;
+}
+
+.user-table td {
+    color: #ffffff;
 }
 
 .delete-btn {
@@ -99,7 +105,363 @@ input[type="text"] {
     background-color: #e0291f;
 }
 
+.delete-btn:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
 .feedback {
     margin-top: 15px;
     font-weight: 600;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    background-color: #001f3f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #003366;
+}
+
+.btn-secondary {
+    background-color: #367cde;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #264d71;
+}
+
+.edit-btn {
+    background-color: #ff851b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.edit-btn:hover {
+    background-color: #e6771a;
+}
+
+.edit-btn:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+.product-count {
+    margin-bottom: 15px;
+    color: rgb(100, 103, 195);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.product-name h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.product-description {
+    font-size: 12px;
+    color: #e0e0e0;
+    line-height: 1.4;
+    display: -webkit-box;
+    
+    overflow: hidden;
+}
+
+.price {
+    font-weight: bold;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.availability {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.availability.in-stock {
+    background-color: rgba(40, 167, 69, 0.8);
+    color: white;
+}
+
+.availability.out-of-stock {
+    background-color: rgba(220, 53, 69, 0.8);
+    color: white;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #ffffff;
+    font-style: italic;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border: 1px solid #f5c6cb;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border: 1px solid #c3e6cb;
+}
+
+.no-products {
+    text-align: center;
+    padding: 40px;
+    font-style: italic;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: #6a7de9;
+    border-radius: 12px;
+    margin: 5% auto;
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgb(130, 153, 228);
+}
+
+.modal-title {
+    color: #001f3f;
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.close {
+    color: rgb(100, 103, 195);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close:hover {
+    color: #001f3f;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: rgb(31, 38, 92);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: #f0f4f8;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    color: #333;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #367cde;
+    box-shadow: 0 0 0 2px rgba(54, 124, 222, 0.2);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.category-fields {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgb(120, 135, 232);
+}
+
+.category-fields h3 {
+    color: #001f3f;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.product-row {
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .manage-products-wrapper {
+        width: 95%;
+        margin: 100px auto 20px auto;
+        padding: 15px;
+        color: #baccf1;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        margin: 2% auto;
+        width: 95%;
+        padding: 20px;
+    }
+
+    .user-table {
+        font-size: 14px;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 8px 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .manage-products-wrapper {
+        width: 98%;
+        padding: 10px;
+    }
+
+    .user-table,
+    .user-table thead,
+    .user-table tbody,
+    .user-table th,
+    .user-table td,
+    .user-table tr {
+        display: block;
+    }
+
+    .user-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .user-table tr {
+        border: 1px solid #5785bd;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #367cde;
+    }
+
+    .user-table td {
+        border: none;
+        border-bottom: 1px solid #5785bd;
+        position: relative;
+        padding-left: 50% !important;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .user-table td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 12px;
+    }
 }
