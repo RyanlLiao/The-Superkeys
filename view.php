@@ -12,62 +12,103 @@
 
 
 <body>
-  <div class="product-container">
+
+<div class ="container">
+
+  <div class="view-container">
     <div class="left-column">
+
       <div class="carousel">
         <img src="img/placeholder.png" class="carousel-img active" alt="Product Image 1">
         <img src="img/placeholder.png" class="carousel-img" alt="Product Image 2">
         <img src="img/placeholder.png" class="carousel-img" alt="Product Image 3">
       </div>
+
       <div class="reviews">
+
         <h3>User Reviews</h3>
-        <div class="review">
-          <strong>Jane Doe</strong>: Great product, highly recommend!
-        </div>
-        <div class="review">
-          <strong>John Smith</strong>: Not bad, but delivery was slow.
-        </div>
+
+        <button class="add-category-btn" onclick="openModal()">+ Add Review</button>
+
+        
       </div>
+
+    </div>
+
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+
+        <h2>Submit a Review</h2>
+
+    
+        <label for="brandSelect"><span style="color:red">**</span>Brand :</label>
+        <select id="brandSelect" required>
+            <option value="">-- Select a Brand --</option>
+            <option value="Nike">Nike</option>
+            <option value="Adidas">Adidas</option>
+             <option value="Puma">Puma</option>
+        </select>
+
+    
+        <label for="ratingSelect">Rating:</label>
+        <select id="ratingSelect">
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+        </select>
+
+    
+        <label for="reviewComment">Comment:</label>
+        <textarea id="reviewComment" placeholder="Write your review here..." rows="4"></textarea>
+
+        <div class="btn-group">
+            <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            <button class="save-btn" onclick="submitReview()">Submit Review</button>
+        </div>
+        </div>
     </div>
 
     <div class="right-column">
+
       <div class="product-details">
-        <h2>Awesome Headphones</h2>
-        <p>High-fidelity audio with noise-cancellation and long battery life.</p>
+        <h1></h1>
+        <p></p>
+        <p></p>
       </div>
-      <div class="price-table">
-        <h3>Price Comparison</h3>
+
+      <div class="category-table">
+        <h2>Price Comparison</h2>
         <table>
           <thead>
             <tr>
               <th>Retailer</th>
               <th>Price</th>
-              <th>Link</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Retailer A</td>
+              <td><a href="https://example.com/a" >Retailer A</a></td>
               <td>$99.99</td>
-              <td><a href="https://example.com/a" target="_blank">Visit</a></td>
             </tr>
             <tr>
-              <td>Retailer B</td>
-              <td>$95.50</td>
-              <td><a href="https://example.com/b" target="_blank">Visit</a></td>
+              <td><a href="https://example.com/a" >Retailer A</a></td>
+              <td>$99.99</td>
             </tr>
             <tr>
-              <td>Retailer C</td>
-              <td>$105.00</td>
-              <td><a href="https://example.com/c" target="_blank">Visit</a></td>
+              <td><a href="https://example.com/a" >Retailer A</a></td>
+              <td>$99.99</td>
             </tr>
           </tbody>
         </table>
       </div>
+
     </div>
-  </div>
+ </div>
+</div>
 
-
+<script src = "js\view.js"></script>
 </body>
 </html>
 

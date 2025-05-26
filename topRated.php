@@ -18,7 +18,7 @@
         <img src="img/placeholder.png" alt="Product 1">
         <h2>Wireless Headphones</h2>
         <div class="rating">★★★★★</div>
-        <p>Crystal-clear sound, active noise cancelling, and 30-hour battery life.</p>
+        <p>From: R1242.99</p>
       </div>
       <div class="product-card">
         <img src="img/placeholder.png" alt="Product 2">
@@ -34,5 +34,6 @@
       </div>
     </div>
   </div>
+  <script src="js/topRated.js"></script>
 </body>
 </html>

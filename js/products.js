@@ -25,7 +25,7 @@ function displayProducts(data) {
             + 'data-brand="' + product.retailer_id + '" data-category="' + category[0] + '" data-type="' + category[1] + '">'
             + '<a href="view.php?id=' + product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
             + '<a href="view.phpid=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
-            + '<h3 id="product_price">R' + product.price + '</h3>'
+            + '<h3 id="product_price">From: R' + product.price + '</h3>'
             + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
             + '<a href="wishlist.php"><button class = "add">Add to Wishlist</button></a>'
             + '</div>';
@@ -35,24 +35,24 @@ function displayProducts(data) {
 
 }
 
-function getTypes(category,callback){
+function getTypes(category, callback) {
     var types = new XMLHttpRequest();
     types.open("POST", "/CompareIt/The-Superkeys/api.php", true);
-    types.setRequestHeader("Content-type","application/json");
+    types.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({
-        "type":"GetDistinct",
-        "apikey":a_key,
-        "category":category
+        "type": "GetDistinct",
+        "apikey": a_key,
+        "category": category
     });
 
-    types.onload = function(){
-        if(types.readyState === 4 && types.status === 200){
+    types.onload = function () {
+        if (types.readyState === 4 && types.status === 200) {
             var response = JSON.parse(types.responseText);
             callback(response);
         }
-        else    
-            console.error("Error: ",types.responseText);
+        else
+            console.error("Error: ", types.responseText);
     }
 
     types.send(body);
@@ -174,11 +174,15 @@ function search() {
 function notfound(found) {
     var none = document.querySelector(".not-found");
 
-    if (!found) {
-        none.style.removeProperty("display");
+
+    if (none) {
+        if (!found) {
+            none.style.removeProperty("display");
+        }
+        else {
+            none.style.display = 'none';
+        }
     }
-    else
-        none.style.display = 'none';
 
 }
 
@@ -278,4 +282,3 @@ function typeFilter(type) {
     notfound(found);
 }
 
-}
