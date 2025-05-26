@@ -125,7 +125,7 @@ class API
 
             case "Login":
                 $email = $data["email"];
-                $password = $data["password"];
+                $password = $data["hashed_password"];
 
                 $empty = $email == "" || $password == "";
                 if ($empty) {
@@ -367,7 +367,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, hashed_password,name FROM Person WHERE email = ?";
+        $query = "SELECT api_key, salt, hashed_password, username,id FROM Person WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
@@ -386,7 +386,7 @@ class API
 
         $usertype = ($this->userCheck($result['api_key'])) ? "Manager" : "User";
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'fname' => $result['name'], 'user-type' => $usertype]);
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user-type' => $usertype, "user_id" => $result['id']]);
     }
 
     //adds a user to the database of registered users
