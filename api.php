@@ -119,7 +119,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
                 $apikey = bin2hex(random_bytes(16));
-                $this->addUser($firstname, $lastname, $email, $password, $phoneNum, $user, $username, $apikey);
+                $this->addUser($name, $surname, $email, $password, $phoneNum, $user, $username, $apikey);
                 return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
 
             case "Login":
@@ -375,11 +375,11 @@ class API
         $added = $this->connection->insert_id;
 
         if ($user === "Manager") {
-            $query = "INSERT INTO Manager (manager_id) VALUES(?)";
+            $query = "INSERT INTO Manager (id) VALUES(?)";
             $statement = $this->connection->prepare($query);
             $statement->bind_param("i", $added);
         } else if ($user === "User") {
-            $query = "INSERT INTO User (user_id) VALUES(?)";
+            $query = "INSERT INTO User (id) VALUES(?)";
             $statement = $this->connection->prepare($query);
             $statement->bind_param("i", $added);
         }
