@@ -251,7 +251,38 @@ class API
                 if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                $result = $this->getDistinct($data);
+                    if(isset($data['category'])){
+                        $category = "";
+                        switch ($data['category']) {
+                            case "Audio_Visual_Equipment":
+                                $category = "Audio_Visual_Equipment";
+                                break;
+                            
+                            case "Computing_Devices":
+                                $category = "Computing_Devices";
+                                break;
+                            
+                            case "Electronic_Accessories":
+                                $category = "Electronic_Accessories";
+                                break;
+                            default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+                        } 
+                        
+                        $result = $this->getDistinct($category,"category");
+                    }
+                    else if (isset($data['distinct'])){
+                        switch($data['distinct']){
+                            case "retailer":
+                                $result = $this->getDistinct("","retailer");
+                            break;
+                             default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid parameter", null);
+                        }
+                        
+                    }
+
+               // $result = $this->getDistinct($data);
                 return $this->response("HTTP/1.1 200 OK", "success", "", $result);
 
             case "Count":
@@ -351,10 +382,12 @@ class API
         $salt = $result["salt"];
         $open = $password . $salt;
         $safe = hash("sha256", $open);
-        if ($result["password"] != $safe)
+        if ($result["hashed_password"] != $safe)
             return $this->response("HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname' => $result['name']]);
+        $usertype = ($this->userCheck($result['api_key'])) ? "Manager": "User";
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'fname' => $result['name'], 'user-type'=> $usertype]);
     }
 
     //adds a user to the database of registered users
@@ -647,25 +680,15 @@ class API
         return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
-    private function getDistinct($data)
+    private function getDistinct($value,$type)
     {
-
-        switch ($data['category']) {
-            case "Audio_Visual_Equipment":
-                $category = "Audio_Visual_Equipment";
-                break;
-            case "Computing_Devices":
-                $category = "Computing_Devices";
-                break;
-            case "Electronic_Accessories":
-                $category = "Electronic_Accessories";
-                break;
-            default:
-                return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+        if($type == "category"){
+            $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$value%'";
         }
-        ;
+        else if($type == 'retailer'){
+            $query = "SELECT DISTINCT name FROM Retailer";
+        }
 
-        $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$category%'";
         // var_dump($query);
         $statement = $this->connection->prepare($query);
 
