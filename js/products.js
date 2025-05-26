@@ -75,7 +75,7 @@ function displayProducts(data) {
 
     function getRetailers(callback) {
         var ret = new XMLHttpRequest();
-        ret.open("POST", "/COS221/Compare_It_Backend/The-Superkeys/api.php", true);
+        ret.open("POST", "http://localhost/The-Superkeys/backend/api.php", true);
         ret.setRequestHeader("Content-type", "application/json");
 
         var body = JSON.stringify({
@@ -427,7 +427,7 @@ function getTypes(category, callback) {
 
 function getRetailers(callback) {
     var ret = new XMLHttpRequest();
-    ret.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    ret.open("POST", "http://localhost/The-Superkeys/backend/api.php", true);
     ret.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({
@@ -457,7 +457,7 @@ function fetchProducts() {
     };
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);  //CompareIt/The-Superkeys
+    xhr.open("POST", "http://localhost/The-Superkeys/backend/api.php", true);  //CompareIt/The-Superkeys
 
     xhr.onreadystatechange = function () {
 
