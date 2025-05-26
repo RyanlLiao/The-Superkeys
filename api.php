@@ -164,7 +164,7 @@ class API
                 return $this->removeRetailer($apikey, $rid);
             case "GetReviews":
                 $apikey = $data['apikey'];
-                $pid = $data['pid'];
+                $pid = $data['pid'] ?? null;
                 $rating_min = $data['rating_min'] ?? null;
                 $rating_max = $data['rating_max'] ?? null;
                 $date_from = $data['date_from'] ?? null;
@@ -251,38 +251,7 @@ class API
                 if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                    if(isset($data['category'])){
-                        $category = "";
-                        switch ($data['category']) {
-                            case "Audio_Visual_Equipment":
-                                $category = "Audio_Visual_Equipment";
-                                break;
-                            
-                            case "Computing_Devices":
-                                $category = "Computing_Devices";
-                                break;
-                            
-                            case "Electronic_Accessories":
-                                $category = "Electronic_Accessories";
-                                break;
-                            default:
-                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
-                        } 
-                        
-                        $result = $this->getDistinct($category,"category");
-                    }
-                    else if (isset($data['distinct'])){
-                        switch($data['distinct']){
-                            case "retailer":
-                                $result = $this->getDistinct("","retailer");
-                            break;
-                             default:
-                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid parameter", null);
-                        }
-                        
-                    }
-
-               // $result = $this->getDistinct($data);
+                $result = $this->getDistinct($data);
                 return $this->response("HTTP/1.1 200 OK", "success", "", $result);
 
             case "Count":
@@ -382,12 +351,10 @@ class API
         $salt = $result["salt"];
         $open = $password . $salt;
         $safe = hash("sha256", $open);
-        if ($result["hashed_password"] != $safe)
+        if ($result["password"] != $safe)
             return $this->response("HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
 
-        $usertype = ($this->userCheck($result['api_key'])) ? "Manager": "User";
-
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'fname' => $result['name'], 'user-type'=> $usertype]);
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname' => $result['name']]);
     }
 
     //adds a user to the database of registered users
@@ -680,15 +647,25 @@ class API
         return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
-    private function getDistinct($value,$type)
+    private function getDistinct($data)
     {
-        if($type == "category"){
-            $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$value%'";
-        }
-        else if($type == 'retailer'){
-            $query = "SELECT DISTINCT name FROM Retailer";
-        }
 
+        switch ($data['category']) {
+            case "Audio_Visual_Equipment":
+                $category = "Audio_Visual_Equipment";
+                break;
+            case "Computing_Devices":
+                $category = "Computing_Devices";
+                break;
+            case "Electronic_Accessories":
+                $category = "Electronic_Accessories";
+                break;
+            default:
+                return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+        }
+        ;
+
+        $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$category%'";
         // var_dump($query);
         $statement = $this->connection->prepare($query);
 
@@ -834,7 +811,10 @@ class API
             return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
 
-        $query = "SELECT * FROM Review WHERE 1=1";
+        $query = "SELECT Review.*, Person.username 
+            FROM Review 
+            JOIN Person ON Review.user_id = Person.id 
+            WHERE 1=1";
         $params = [];
         $types = "";
 
