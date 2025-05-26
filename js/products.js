@@ -14,7 +14,7 @@ function displayProducts(data) {
 
     container.innerHTML += "<div class='not-found' style='display:none;'>Product not found</div>";
 
-   // console.log(data);
+    // console.log(data);
 
     for (var i = 0; i < data.length; i++) {
         var product = data[i];
@@ -28,10 +28,10 @@ function displayProducts(data) {
             + '<div class="product" '
             + 'data-brand="' + product.retailer_name + '" data-category="' + category[0] + '" data-type="' + category[1] + '" data-id="' + product.product_id + '">'
             + '<a href="view.php?id=' + product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
-            + '<a href="view.phpid=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
+            + '<a href="view.php?id=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
             + '<h3 id="product_price">R' + product.price + '</h3>'
             + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
-            + '<button class = "add">Add to Wishlist</button>'
+            + '<button class="add" ">Add to Wishlist</button>'
             + '</div>';
         //edit add to wishlist functionality
         container.innerHTML += card;
@@ -86,7 +86,7 @@ function getRetailers(callback) {
     ret.send(body);
 }
 
-function fetchProducts() {
+function fetchProducts(callback) {
 
     var requestBody = {
         type: "GetAllProducts",
@@ -117,6 +117,7 @@ function fetchProducts() {
                 // console.log("Products fetched, calling DISPLAY");
 
                 displayProducts(data);
+                callback();
 
             } else {
                 console.log("API returned error:", response.message);
@@ -131,9 +132,51 @@ function fetchProducts() {
     xhr.send(JSON.stringify(requestBody));
 }
 
+function addWishlist(button) {
+    //console.log("ADDINGG.....");
+
+    //var button = event.currentTarget;
+    var pid = button.closest(".product").getAttribute("data-id");
+
+    var wish = new XMLHttpRequest();
+    wish.open("POST", "/COS221/Compare_It_Backend/The-Superkeys/api.php", true);
+    wish.setRequestHeader("Content-type", "application/json");
+
+    var body = JSON.stringify({
+        "type": "AddWishlist",
+        "apikey": localStorage.getItem("api_key"),
+        "pid": pid
+    });
+
+    wish.onload = () => {
+        if (wish.readyState == 4 && wish.status == 200) {
+            var response = JSON.parse(wish.responseText);
+            alert(response.data);
+        }
+        else
+            console.error(wish.responseText.message);
+    }
+
+    wish.send(body);
+
+}
+
 window.onload = function () {
     // console.log("Page loaded. Fetching products...");
-    fetchProducts();
+    fetchProducts(() => {
+        var button = document.querySelectorAll(".add");
+        button.forEach((item) => {
+           // console.log(item);
+
+            item.addEventListener("click", () => {
+               // console.log("HERE");
+                addWishlist(item);
+
+            });
+        });
+    });
+
+    //Retailer filter
     getRetailers(function (names) {
 
         names = names.map(retailer => retailer.name);
@@ -152,7 +195,8 @@ window.onload = function () {
 
             brandFilter.appendChild(option);
         }
-    })
+    });
+
 };
 
 function search() {
@@ -178,8 +222,14 @@ function search() {
 }
 
 function notfound(found) {
-    console.log("not found");
+    //console.log("not found");
     var none = document.querySelector(".not-found");
+
+    if (!none) {
+        var container = document.querySelector(".product-grid");
+        container.innerHTML += "<div class='not-found' style='display:none;'>Product not found</div>";
+        none = document.querySelector(".not-found");
+    }
 
     if (!found) {
         none.style.removeProperty("display");
@@ -205,7 +255,7 @@ function priceFilter(range) {
     var product = document.querySelectorAll(".product");
     var found = false;
 
-    console.log("min: " + min + "\nmax: " + max);
+   // console.log("min: " + min + "\nmax: " + max);
 
     for (var i = 0; i < product.length; i++) {
         var price = parseFloat((product[i].querySelector("#product_price").innerText).substring(1));
@@ -332,6 +382,8 @@ function clearFilter(products) {
         products[i].style.removeProperty("display");
         products.pop(products[i]);
     }
+
+    notfound(true);
 }
 
 ///SORTING
@@ -358,44 +410,3 @@ function priceSort(sort) {
         container.appendChild(item);
     });
 }
-
-
-var addWishlist = document.querySelectorAll(".add");
-addWishlist.forEach(button => {
-    button.addEventListener("click", () => {
-        var pid = button.closest(".product").getAttribute("data-id");
-
-    });
-});
-
-
-//ADD TO WISHLIST
-
-var addWishlist = document.querySelectorAll(".add");
-addWishlist.forEach(button => {
-    button.addEventListener("click", () => {
-        var pid = button.closest(".product").getAttribute("data-id");
-
-        var wish = new XMLHttpRequest();
-        wish.open("POST", "/COS221/Compare_It_Backend/The-Superkeys/api.php", true);
-        wish.setRequestHeader("Content-type", "application/json");
-
-        var body = JSON.stringify({
-            "type": "AddWishlist",
-            "apikey": localStorage.getItem("api_key"),
-            "pid": pid
-        });
-
-        wish.onload = () => {
-            if (wish.readyState == 4 && wish.status == 200) {
-                var response = JSON.parse(wish.responseText);
-                alert(response.data);
-            }
-            else
-                console.error(wish.responseText.message);
-        }
-
-        wish.send(body);
-
-    });
-});
