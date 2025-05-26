@@ -24,9 +24,9 @@
     <div class="filters">
             <select name="category" onchange="categoryFilter(value)">
                 <option value="">All Categories</option>
-                <option value="computing">Computing Devices</option>
-                <option value="audio">Audio-Visual</option>
-                <option value="accessories">Accessories</option>
+                <option value="Computing_Devices">Computing Devices</option>
+                <option value="Audio_Visual_Equipment">Audio-Visual</option>
+                <option value="Electronic_Accessories">Accessories</option>
             </select>
 
             <select name="type"  onchange="typeFilter(value)">
@@ -53,7 +53,7 @@
 
             
 
-            <select name="sort-by-price">
+            <select name="sort-by-price"  onchange = "priceSort(value)">
                 <option value="">Sort By</option>
                 <option value="ASC">Low to High</option>
                 <option value="DESC">High to Low</option>

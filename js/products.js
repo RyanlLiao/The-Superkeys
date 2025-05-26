@@ -49,7 +49,7 @@ function getTypes(category, callback) {
     types.onload = function () {
         if (types.readyState === 4 && types.status === 200) {
             var response = JSON.parse(types.responseText);
-            callback(response);
+            callback(response.data);
         }
         else
             console.error("Error: ", types.responseText);
@@ -60,40 +60,11 @@ function getTypes(category, callback) {
 
 function fetchProducts() {
 
-    var searchInput = document.querySelector(".search-box input[name='q']").value.toLowerCase();
-    var categoryFilter = document.querySelector("select[name='category']").value;
-    var typeFilter = document.querySelector("select[name='type']").value;
-    var brandFilter = document.querySelector("select[name='brand']").value;
-    var priceFilter = document.querySelector("select[name='filter-by-price']").value;
-    var sortByPrice = document.querySelector("select[name='sort-by-price']").value;
-
-    // var sortField = "title";
-    // var sortOrder = "ASC";
-
-    // if (sortPrice === "Low to High") {
-    //     sortField = "final_price";
-    //     sortOrder = "ASC";
-    // } else if (sortOption === "High to Low") {
-    //     sortField = "final_price";
-    //     sortOrder = "DESC";
-    // }
-
-    // AMAAIIIIII!!!!????
-
     var requestBody = {
         type: "GetAllProducts",
         apikey: a_key,
         return: "*"
     };
-
-    if (searchInput) {
-        requestBody.search = {
-            title: searchInput,
-            brand: searchInput
-        };
-    }
-
-
 
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);  //CompareIt/The-Superkeys
@@ -111,8 +82,6 @@ function fetchProducts() {
             console.log(response);
             if (response.status == 'success') {
                 var data = response.data;
-
-                //FILTER LOGIC
 
                 console.log("condition accepted");
                 products = data;
@@ -137,16 +106,6 @@ function fetchProducts() {
 window.onload = function () {
     console.log("Page loaded. Fetching products...");
     fetchProducts();
-
-
-    // document.getElementById("search-input").addEventListener("keyup", function (event) {
-    //     if (event.keyCode === 13) fetchProducts();
-    // });
-    // document.getElementById("brand-filter").addEventListener("change", fetchProducts);
-    // document.getElementById("price-filter").addEventListener("change", fetchProducts);
-    // document.getElementById("sortBtn").addEventListener("change", fetchProducts);
-    // document.getElementById("country-filter").addEventListener("change", fetchProducts);
-
 };
 
 function search() {
@@ -186,27 +145,17 @@ function notfound(found) {
 
 }
 
-
-// function applyFilter() {
-//     var price = document.querySelector("[name='filter-by-price']").value;
-//     var brand = document.querySelector("[name='brand']").value;
-//     var category = document.querySelector("[name='category']").value;
-//     var type = document.querySelector("[name='type']").value;
-
-//     if (price !== "")
-//         priceFilter(price);
-
-//     if (brand !== "")
-//         brandFilter(brand);
-
-//     if (category !== "")
-//         categoryFilter(category);
-
-//     if (type !== "")
-//         typeFilter(type);
-// }
+var priceHidden = [];
+var brandHidden = [];
+var categoryHidden = [];
+var typeHidden = [];
 
 function priceFilter(range) {
+    if (range === "") {
+        clearFilter(priceHidden);
+        return;
+    }
+
     var min = parseInt(range.substring(0, range.indexOf('-')));
     var max = parseInt(range.substring(range.indexOf('-')));
     var product = document.querySelectorAll(".product");
@@ -219,14 +168,21 @@ function priceFilter(range) {
             product[i].style.removeProperty("display");
             found = true;
         }
-        else
+        else {
             product[i].style.display = "none";
+            priceHidden.push(product[i]);
+        }
     }
 
     notfound(found);
 }
 
 function brandFilter(brand) {
+    if (brand === "") {
+        clearFilter(brandHidden);
+        return;
+    }
+
     var product = document.querySelectorAll(".product");
     var found = false;
 
@@ -237,16 +193,21 @@ function brandFilter(brand) {
             product[i].style.removeProperty("display");
             found = true;
         }
-        else
+        else {
             product[i].style.display = "none";
+            brandHidden.push(product[i]);
+        }
     }
 
     notfound(found);
 }
 
 function categoryFilter(category) {
-    console.log("Filtering by category...");
-    console.log(category);
+    if (category == "") {
+        clearFilter(categoryHidden);
+        return;
+    }
+
     var product = document.querySelectorAll(".product");
     var found = false;
 
@@ -257,14 +218,48 @@ function categoryFilter(category) {
             product[i].style.removeProperty("display");
             found = true;
         }
-        else
+        else {
             product[i].style.display = "none";
+            categoryHidden.push(product[i]);
+        }
     }
+
+    //setup types based on the category selected
+    getTypes(category, function (typeList) {
+        var types = [];
+
+        typeList.forEach(type => {
+            type.Category = JSON.parse(type.Category);
+            types.push(type.Category[1]);
+        });
+
+        // console.log(types);
+        var typeFilter = document.querySelector("[name='type']");
+        typeFilter.innerHTML = "";
+
+        var default_option = document.createElement("option");
+        default_option.value = "";
+        default_option.innerText = "All Types";
+        typeFilter.appendChild(default_option);
+
+        for (var i = 0; i < typeList.length; i++) {
+            var option = document.createElement("option");
+            option.value = types[i];
+            option.innerText = types[i].replace("_", " ");
+
+            typeFilter.appendChild(option);
+        }
+    });
 
     notfound(found);
 }
 
 function typeFilter(type) {
+    if (type === "") {
+        clearFilter(typeHidden);
+        return;
+    }
+
     var product = document.querySelectorAll(".product");
     var found = false;
 
@@ -275,10 +270,44 @@ function typeFilter(type) {
             product[i].style.removeProperty("display");
             found = true;
         }
-        else
+        else {
             product[i].style.display = "none";
+            typeHidden.push(product[i]);
+        }
     }
 
     notfound(found);
+}
+
+function clearFilter(products) {
+    for (var i = 0; i < products.length; i++) {
+        products[i].style.removeProperty("display");
+        products.pop(products[i]);
+    }
+}
+
+///SORTING
+
+function priceSort(sort) {
+    //console.log("sorting...");
+    var product = document.querySelectorAll(".product");
+    var array = Array.from(product);
+
+    array.sort(function(a,b){
+        var priceA = parseFloat((a.querySelector("#product_price").innerText).substring(1));
+        var priceB = parseFloat((b.querySelector("#product_price").innerText).substring(1));
+
+        if(sort == "ASC")
+            return priceA - priceB;
+        else if(sort == "DESC")
+            return priceB - priceA;
+    });
+
+    var container = document.querySelector(".product-grid");
+    container.innerHTML = "";
+
+    array.forEach(item => {
+        container.appendChild(item);
+    });
 }
 
