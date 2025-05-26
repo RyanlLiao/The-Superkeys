@@ -1,6 +1,6 @@
 class WishlistManager {
     constructor() {
-        this.apiEndpoint = 'api.php'; 
+        this.apiEndpoint = '/COS221/api.php'; 
         this.apikey = this.getApiKey();
         this.init();
     }
@@ -33,8 +33,11 @@ class WishlistManager {
     }
 
     async makeApiRequest(data) {
+
+       
         try {
-            const response = await fetch(this.apiEndpoint, {
+            const response = await fetch(this.apiEndpoint, 
+                {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
