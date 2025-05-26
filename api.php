@@ -41,7 +41,29 @@ class API
         if (!isset($object['type']) && $object['type'] == "")
             return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST parameter", null);
 
-        $types = ["Register", "Login", "GetAllProducts","GetProduct" ,"AddProduct", "RemoveProduct","AddRetailer", "RemoveRetailer", "GetReviews", "AddReview", "RemoveReview", "AddComment", "RemoveComment", "GetWishlist", "AddWishlist", "RemoveWishlist", "UpdatePrice", "CreateCategory", "UpdateCategory", "RemoveCategory"];        //might add admin
+        $types = [
+            "Register",
+            "Login",
+            "GetAllProducts",
+            "GetProduct",
+            "AddProduct",
+            "GetDistinct",
+            "RemoveProduct",
+            "AddRetailer",
+            "RemoveRetailer",
+            "GetReviews",
+            "AddReview",
+            "RemoveReview",
+            "AddComment",
+            "RemoveComment",
+            "GetWishlist",
+            "AddWishlist",
+            "RemoveWishlist",
+            "UpdatePrice",
+            "Count",
+            "GetAllUsers",
+            "DeleteUser"
+        ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
         if (!$valid)
@@ -77,10 +99,11 @@ class API
                 $surname = $data["surname"];
                 $email = $data["email"];
                 $password = $data["password"];
-                $confirm = $data["password_confirm"];
                 $user = $data["user_type"];
+                $username = $data["username"];
+                $phoneNum = $data["phone_number"];
 
-                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $confirm === "" || $user === "";
+                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $username === "" || $user === "" || $phoneNum === "";
                 $email_check = preg_match('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/', $email);
                 $pass_check = preg_match('/^((?=.*\W)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])).{8,}$/', $password);
 
@@ -97,12 +120,14 @@ class API
                 if ($result)
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Email already exists", null);
 
+
                 $apikey = bin2hex(random_bytes(16));
+                $this->addUser($name, $surname, $email, $password, $phoneNum, $user, $username, $apikey);
                 return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $apikey]);
 
             case "Login":
                 $email = $data["email"];
-                $password = $data["password"];
+                $password = $data["hashed_password"];
 
                 $empty = $email == "" || $password == "";
                 if ($empty) {
@@ -126,8 +151,6 @@ class API
             case "AddRetailer":
                 $apikey = $data['apikey'];
                 $rName = $data['name'];
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($rName == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer Name", null);
@@ -136,8 +159,6 @@ class API
             case "RemoveRetailer":
                 $apikey = $data['apikey'];
                 $rid = $data['rid'];
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($rid == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer ID", null);
@@ -197,8 +218,6 @@ class API
                 $retailer = $data['retailer'];
                 $product = $data['product'];
                 $date = isset($data['date']) && !empty($data['date']) ? date('Y-m-d H:i:s', strtotime($data['date'])) : date('Y-m-d H:i:s');
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($price == "" || $retailer == "" || $product == "" || $date == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
@@ -224,103 +243,79 @@ class API
 
                 if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
-                    
-                return $this->response("HTTP/1.1 200 OK", "success", "", $this->getProduct($data['product_id']));
-            case "CreateCategory":
+
+                $result = $this->getProduct($data['product_id']);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
+
+            case "GetDistinct":
                 $apikey = $data['apikey'];
-                if (!$this->userCheck($apikey))
+
+                if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                $categoryName = $data['category_name'];
-                $fields = $data['fields'] ?? [];
-                $datatypes = $data['datatypes'] ?? [];
-                if (empty($categoryName) || !is_string($categoryName)) {
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
-                }
+                if (isset($data['category'])) {
+                    $category = "";
+                    switch ($data['category']) {
+                        case "Audio_Visual_Equipment":
+                            $category = "Audio_Visual_Equipment";
+                            break;
 
-                $query = "CREATE TABLE IF NOT EXISTS `$categoryName` (
-                    `product_id` INT NOT NULL,";
+                        case "Computing_Devices":
+                            $category = "Computing_Devices";
+                            break;
 
-                foreach ($fields as $index => $field) {
-                    $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
-                    $query .= "`$field` $datatype, ";
-                }
-                
-                $query .= "PRIMARY KEY (`product_id`), 
-                    CONSTRAINT `fk_{$categoryName}_product` FOREIGN KEY (`product_id`) REFERENCES `Product`(`product_id`) 
-                    ON DELETE CASCADE 
-                    ON UPDATE CASCADE
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-
-                if ($this->connection->query($query) === TRUE) {
-                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category created successfully");
-                } else {
-                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error creating category: " . $this->connection->error, null);
-                }
-            case "UpdateCategory":
-                $apikey = $data['apikey'];
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
-
-                $categoryName = $data['category_name'];
-                $fields = $data['fields'] ?? [];
-                $datatypes = $data['datatypes'] ?? [];
-                if (empty($categoryName) || !is_string($categoryName)) {
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
-                }
-
-                // Get current columns in the table
-                $columns = [];
-                $colQuery = "SHOW COLUMNS FROM `$categoryName`";
-                $colResult = $this->connection->query($colQuery);
-                if ($colResult) {
-                    while ($row = $colResult->fetch_assoc()) {
-                        $columns[] = $row['Field'];
+                        case "Electronic_Accessories":
+                            $category = "Electronic_Accessories";
+                            break;
+                        default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
                     }
-                }
 
-                $alterStatements = [];
-                foreach ($fields as $index => $field) {
-                    if (in_array($field, $columns)) {
-                        // If field exists, drop it
-                        $alterStatements[] = "DROP COLUMN `$field`";
-                    } else {
-                        // If field does not exist, add it
-                        $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
-                        $alterStatements[] = "ADD COLUMN `$field` $datatype";
+                    $result = $this->getDistinct($category, "category");
+                } else if (isset($data['distinct'])) {
+                    switch ($data['distinct']) {
+                        case "retailer":
+                            $result = $this->getDistinct("", "retailer");
+                            break;
+                        default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid parameter", null);
                     }
+
                 }
 
-                if (empty($alterStatements)) {
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "No valid fields to alter", null);
-                }
+                // $result = $this->getDistinct($data);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
 
-                $query = "ALTER TABLE `$categoryName` " . implode(", ", $alterStatements);
-
-                if ($this->connection->query($query) === TRUE) {
-                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category updated successfully");
-                } else {
-                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error updating category: " . $this->connection->error, null);
-                }
-            case "RemoveCategory":
+            case "Count":
                 $apikey = $data['apikey'];
-                if (!$this->userCheck($apikey))
+
+                if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                $categoryName = $data['category_name'];
-                if (empty($categoryName) || !is_string($categoryName)) {
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
-                }
+                $result = $this->count($data);
+                return $this->response("HTTP/1.1 200 OK", "success", "", $result);
+            case "GetAllUsers":
+                $apikey = $data['apikey'];
 
-                $query = "DROP TABLE IF EXISTS `$categoryName`";
-                if ($this->connection->query($query) === TRUE) {
-                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category removed successfully");
-                } else {
-                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error removing category: " . $this->connection->error, null);
-                }
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+
+                return $this->getAllUsers();
+            case "DeleteUser":
+                $apikey = $data['apikey'];
+                $user_id = $data['user_id'] ?? null;
+
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+
+                if (empty($user_id))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing User ID", null);
+
+                return $this->deleteUser($user_id);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
+
     }
 
     //this function will check if the passed in paramater is an array of allowed values
@@ -392,7 +387,7 @@ class API
     //logs in the passed in user   
     private function login($email, $password)
     {
-        $query = "SELECT api_key, salt, password,name FROM Person WHERE email = ?";
+        $query = "SELECT api_key, salt, hashed_password, username,id FROM Person WHERE email = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $email);
         $statement->execute();
@@ -406,10 +401,12 @@ class API
         $salt = $result["salt"];
         $open = $password . $salt;
         $safe = hash("sha256", $open);
-        if ($result["password"] != $safe)
+        if ($result["hashed_password"] != $safe)
             return $this->response("HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname' => $result['name']]);
+        $usertype = ($this->userCheck($result['api_key'])) ? "Manager" : "User";
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user-type' => $usertype, "user_id" => $result['id']]);
     }
 
     //adds a user to the database of registered users
@@ -431,11 +428,11 @@ class API
         $added = $this->connection->insert_id;
 
         if ($user === "Manager") {
-            $query = "INSERT INTO Manager (manager_id) VALUES(?)";
+            $query = "INSERT INTO Manager (id) VALUES(?)";
             $statement = $this->connection->prepare($query);
             $statement->bind_param("i", $added);
         } else if ($user === "User") {
-            $query = "INSERT INTO User (user_id) VALUES(?)";
+            $query = "INSERT INTO User (id) VALUES(?)";
             $statement = $this->connection->prepare($query);
             $statement->bind_param("i", $added);
         }
@@ -465,28 +462,38 @@ class API
         }
     }
 
-    private function getWhitelist()
+    private function getWhitelist($type)
     {
-        $allowed = [
-            "product_id",
-            "product_name",
-            "description",
-            "Category",
-            "availability",
-            "average_rating",
-            "images",
-            "retailer",
-            "price",
-            "price_min",
-            "price_max",
-        ];
+        if ($type == "product") {
+            $allowed = [
+                "product_id",
+                "product_name",
+                "description",
+                "Category",
+                "availability",
+                "average_rating",
+                "images",
+                "retailer",
+                "price",
+                "price_min",
+                "price_max",
+            ];
+        }
+
+        if ($type == "count") {
+            $allowed = [
+                "Users",
+                "Products",
+                "Reviews",
+            ];
+        }
         return $allowed;
     }
 
     //this will get products from the database - only manager apikeys will be valid
     private function getProducts($data)
     {
-        $allowed = $this->getWhitelist();
+        $allowed = $this->getWhitelist("product");
 
         //input validation
         $return = $data["return"] === "*" ? "*" : array_intersect($data["return"], $allowed);
@@ -546,10 +553,10 @@ class API
         $limitClause = ($limit != null) ? "LIMIT " . $limit : "";
 
         //get rows
-        $query = "SELECT $select FROM Product P NATURAL JOIN Sold_by S NATURAL JOIN (SELECT product_id, MIN(price) as price FROM Sold_by GROUP BY product_id) T $whereClause  ORDER BY RAND()  $limitClause";
+        $query = "SELECT $select FROM getProducts $whereClause $limitClause";
 
         $statement = $this->connection->prepare($query);
-         var_dump($query);
+        // var_dump($query);
 
         if (!empty($parameters))
             $statement->bind_param($vartypes, ...$parameters);
@@ -610,7 +617,7 @@ class API
             $category
         );
 
-        echo "parameters bound\n";
+        // echo "parameters bound\n";
         if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't add product", null);
 
@@ -618,7 +625,7 @@ class API
 
         //now update product specialisation
         $category = $product['category'][0];
-        var_dump($category);
+        // var_dump($category);
         $placeholders = "?";
         $vartypes = "";
         $column = "";
@@ -676,7 +683,7 @@ class API
 
 
         //not sure what other tables to update
-        return $this->response("HTTP/1.1 200 OK", "success", "", "Product added successfully");
+        return $this->response("HTTP/1.1 200 OK", "success", "product added successfylluy", null);
     }
 
     //this will remove products from the tables - only manager apikeys will be valid
@@ -689,12 +696,100 @@ class API
         if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't remove product", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", "Product removed successfully");
+        return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
+    private function getDistinct($value, $type)
+    {
+        if ($type == "category") {
+            $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$value%'";
+        } else if ($type == 'retailer') {
+            $query = "SELECT DISTINCT name FROM Retailer";
+        }
+
+        // var_dump($query);
+        $statement = $this->connection->prepare($query);
+
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't remove product", null);
+
+        $result = $statement->get_result();
+        $result = $result->fetch_all(MYSQLI_ASSOC);
+
+        return $result;
+    }
+
+    private function count($data)
+    {
+        // echo "COUNTING...";
+        $type = $data['count_type'];
+        $allowed = $this->getWhitelist($type);
+        //var_dump($allowed);
+
+        $type = array_intersect($allowed, [$data["count"]]);
+        // var_dump($type);
+        if (empty($type))
+            return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+
+        $table = "";
+
+        switch ($type[0]) {
+            case "Users":
+                $table = "Person";
+                break;
+
+            case "Products":
+                $table = "Product";
+                break;
+            case "Reviews":
+                $table = "Review";
+                break;
+        }
+        ;
+
+        $query = "SELECT Count(*) as count FROM $table";
+        $statement = $this->connection->prepare($query);
+        // var_dump($query);
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+        $result = $statement->get_result();
+        $result = $result->fetch_assoc();
+
+        // var_dump($result);
+        return $result["count"];
+    }
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("s", $apikey);
+        $pstmt->execute();
+        $pstmt->store_result();
+
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt->bind_result($managerID);
+        $pstmt->fetch();
+        $pstmt->close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("i", $managerID);
+        $pstmt->execute();
+        $pstmt->store_result();
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt->close();
+
         $query = "INSERT INTO Retailer (name) VALUES (?)";
         $pstmt = $this->connection->prepare($query);
         if (!$pstmt)
@@ -711,6 +806,34 @@ class API
     //this removes a retailer from the table - only manager apikeys will be accepted
     private function removeRetailer($apikey, $rid)
     {
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("s", $apikey);
+        $pstmt->execute();
+        $pstmt->store_result();
+
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt->bind_result($managerID);
+        $pstmt->fetch();
+        $pstmt->close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("i", $managerID);
+        $pstmt->execute();
+        $pstmt->store_result();
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt->close();
+
         $query = "DELETE FROM Retailer WHERE retailer_id = ?";
         $pstmt = $this->connection->prepare($query);
         if (!$pstmt)
@@ -730,13 +853,7 @@ class API
             return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
 
-        // Join Review with Person to get username
-        $query = "SELECT Review.*, Person.username 
-            FROM Review 
-            JOIN Person ON Review.user_id = Person.id 
-            WHERE 1=1";
-        $params = [];
-        $types = "";
+        $query = "SELECT Review.*, Person.username FROM Review JOIN Person ON Review.user_id = Person.id WHERE 1=1";
 
         if ($pid !== null && $pid !== "") {
             $query .= " AND product_id = ?";
@@ -964,6 +1081,7 @@ class API
         $pstmt->bind_param("s", $apikey);
         $pstmt->execute();
         $pstmt->store_result();
+
         if ($pstmt->num_rows === 0) {
             return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
@@ -971,11 +1089,20 @@ class API
         $pstmt->fetch();
         $pstmt->close();
 
-        $query = 'SELECT * FROM Product u_p ' .
-            'JOIN Wishlist u_w ' .
-            'ON u_p.product_id = u_w.product_id ' .
-            'WHERE u_w.user_id = ?';
+        $query = 'SELECT id FROM User WHERE id = ?';
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt->bind_param('i', $userID);
+        $pstmt->execute();
+        $pstmt->store_result();
+        if ($pstmt->num_rows === 0) {
+            return $this->response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A User ID", null);
+        }
+        $pstmt->close();
 
+        $query = 'SELECT * FROM UserWishlist WHERE user_id = ?';
         $pstmt = $this->connection->prepare($query);
         if (!$pstmt) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
@@ -997,6 +1124,35 @@ class API
     //to change the price of an item
     private function updatePrice($apikey, $price, $retailer, $product, $date)
     {
+        //manager apikey to change price
+        $query = "SELECT id FROM Person WHERE api_key = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("s", $apikey);
+        $pstmt->execute();
+        $pstmt->store_result();
+
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+        }
+
+        $pstmt->bind_result($managerID);
+        $pstmt->fetch();
+        $pstmt->close();
+
+        $query = "SELECT id FROM Manager WHERE id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        $pstmt->bind_param("i", $managerID);
+        $pstmt->execute();
+        $pstmt->store_result();
+        if ($pstmt->num_rows == 0) {
+            return $this->response("HTTP/1.1 401 Unauthorised", "error", "This is NOT A Manager ID", null);
+        }
+        $pstmt->close();
+
         // Get the current price from Sold_by
         $query = "SELECT price FROM Sold_by WHERE retailer_id = ? AND product_id = ?";
         $pstmt = $this->connection->prepare($query);
@@ -1036,6 +1192,36 @@ class API
         $pstmt->close();
 
         return $this->response("HTTP/1.1 200 OK", "success", "", "Price updated successfully");
+    }
+
+    private function getAllUsers()
+    {
+        $query = "SELECT * FROM Person JOIN User ON Person.id = User.id";
+        $pstmt = $this->connection->prepare($query);
+
+        if (!$pstmt->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't retrieve users", null);
+
+        $result = $pstmt->get_result();
+        $users = $result->fetch_all(MYSQLI_ASSOC);
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", $users);
+    }
+
+    private function deleteUser($userID)
+    {
+        $query = "DELETE FROM Person WHERE id = ?";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt)
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+
+        $pstmt->bind_param("i", $userID);
+        if (!$pstmt->execute()) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't delete user", null);
+        }
+        $pstmt->close();
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", "User deleted successfully");
     }
 }
 
