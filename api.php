@@ -101,7 +101,7 @@ class API
                 $username = $data["username"];
                 $phoneNum = $data["phone_number"];
 
-                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $username === "" || $user === "" || $phoneNum === "" ;
+                $empty = $name === "" || $surname === "" || $email === "" || $password === "" || $username === "" || $user === "" || $phoneNum === "";
                 $email_check = preg_match('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/', $email);
                 $pass_check = preg_match('/^((?=.*\W)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])).{8,}$/', $password);
 
@@ -164,7 +164,7 @@ class API
                 return $this->removeRetailer($apikey, $rid);
             case "GetReviews":
                 $apikey = $data['apikey'];
-                $pid = $data['pid'] ?? null;
+                $pid = $data['pid'];
                 $rating_min = $data['rating_min'] ?? null;
                 $rating_max = $data['rating_max'] ?? null;
                 $date_from = $data['date_from'] ?? null;
@@ -251,7 +251,37 @@ class API
                 if (!$this->checkApikey($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                $result = $this->getDistinct($data);
+                if (isset($data['category'])) {
+                    $category = "";
+                    switch ($data['category']) {
+                        case "Audio_Visual_Equipment":
+                            $category = "Audio_Visual_Equipment";
+                            break;
+
+                        case "Computing_Devices":
+                            $category = "Computing_Devices";
+                            break;
+
+                        case "Electronic_Accessories":
+                            $category = "Electronic_Accessories";
+                            break;
+                        default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+                    }
+
+                    $result = $this->getDistinct($category, "category");
+                } else if (isset($data['distinct'])) {
+                    switch ($data['distinct']) {
+                        case "retailer":
+                            $result = $this->getDistinct("", "retailer");
+                            break;
+                        default:
+                            return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid parameter", null);
+                    }
+
+                }
+
+                // $result = $this->getDistinct($data);
                 return $this->response("HTTP/1.1 200 OK", "success", "", $result);
 
             case "Count":
@@ -351,10 +381,12 @@ class API
         $salt = $result["salt"];
         $open = $password . $salt;
         $safe = hash("sha256", $open);
-        if ($result["password"] != $safe)
+        if ($result["hashed_password"] != $safe)
             return $this->response("HTTP/1.1 404 BAD REQUEST", "error", "Invalid Credentials", null);
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['apikey'], 'fname' => $result['name']]);
+        $usertype = ($this->userCheck($result['api_key'])) ? "Manager" : "User";
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'fname' => $result['name'], 'user-type' => $usertype]);
     }
 
     //adds a user to the database of registered users
@@ -428,7 +460,7 @@ class API
             ];
         }
 
-        if($type == "count"){
+        if ($type == "count") {
             $allowed = [
                 "Users",
                 "Products",
@@ -647,25 +679,14 @@ class API
         return $this->response("HTTP/1.1 200 OK", "success", "product removed successfully", null);
     }
 
-    private function getDistinct($data)
+    private function getDistinct($value, $type)
     {
-
-        switch ($data['category']) {
-            case "Audio_Visual_Equipment":
-                $category = "Audio_Visual_Equipment";
-                break;
-            case "Computing_Devices":
-                $category = "Computing_Devices";
-                break;
-            case "Electronic_Accessories":
-                $category = "Electronic_Accessories";
-                break;
-            default:
-                return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category", null);
+        if ($type == "category") {
+            $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$value%'";
+        } else if ($type == 'retailer') {
+            $query = "SELECT DISTINCT name FROM Retailer";
         }
-        ;
 
-        $query = "SELECT DISTINCT Category FROM Product WHERE Category LIKE '%$category%'";
         // var_dump($query);
         $statement = $this->connection->prepare($query);
 
@@ -680,41 +701,42 @@ class API
 
     private function count($data)
     {
-       // echo "COUNTING...";
+        // echo "COUNTING...";
         $type = $data['count_type'];
         $allowed = $this->getWhitelist($type);
         //var_dump($allowed);
 
-        $type = array_intersect($allowed,[$data["count"]]);
-       // var_dump($type);
-        if(empty($type))
+        $type = array_intersect($allowed, [$data["count"]]);
+        // var_dump($type);
+        if (empty($type))
             return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
 
         $table = "";
 
-        switch($type[0]){
+        switch ($type[0]) {
             case "Users":
                 $table = "Person";
                 break;
-            
+
             case "Products":
                 $table = "Product";
                 break;
             case "Reviews":
                 $table = "Review";
                 break;
-        };
+        }
+        ;
 
         $query = "SELECT Count(*) as count FROM $table";
         $statement = $this->connection->prepare($query);
-       // var_dump($query);
-        if(!$statement->execute())
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}",null);
+        // var_dump($query);
+        if (!$statement->execute())
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
 
         $result = $statement->get_result();
         $result = $result->fetch_assoc();
 
-       // var_dump($result);
+        // var_dump($result);
         return $result["count"];
     }
     //this adds a new retailer - only manager apikeys will be accepted
@@ -811,12 +833,7 @@ class API
             return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
 
-        $query = "SELECT Review.*, Person.username 
-            FROM Review 
-            JOIN Person ON Review.user_id = Person.id 
-            WHERE 1=1";
-        $params = [];
-        $types = "";
+        $query = "SELECT Review.*, Person.username FROM Review JOIN Person ON Review.user_id = Person.id WHERE 1=1";
 
         if ($pid !== null && $pid !== "") {
             $query .= " AND product_id = ?";
