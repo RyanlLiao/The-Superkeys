@@ -5,10 +5,10 @@ const ctx = document.getElementById('myChart');
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+      labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
       datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
+        label: 'Number of products per rating',
+        data: [19, 30, 5, 2, 3],        //VALUES CAN BE CHANGED FROM HERE
         borderWidth: 1
       }]
     },

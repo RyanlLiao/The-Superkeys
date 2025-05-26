@@ -63,10 +63,12 @@
         <p>Chart or detailed insights can go here.</p>
     </div>
 
-    <div>
+
+</div>
+
+    <div class="card full-width" id="chart-container">
         <canvas id="myChart"></canvas>
     </div>
-</div>
 
 </body>
 </html>
