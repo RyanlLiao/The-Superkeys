@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log(req.responseText);
                     var json = JSON.parse(req.responseText);
                     if (json.status === "success") {
-                        alert("Successful registration!\n\nYour API key is: " + json.data.apikey);
+                        alert("Successful registration!\n\nPlease log in.");
                         window.location.href = "login.php";
                     } else {
                         errorMessage.textContent = "Registration error: " + json.message;

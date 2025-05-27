@@ -44,9 +44,6 @@
         <label for="brandSelect"><span style="color:red">**</span>Brand :</label>
         <select id="brandSelect" required>
             <option value="">-- Select a Brand --</option>
-            <option value="Nike">Nike</option>
-            <option value="Adidas">Adidas</option>
-             <option value="Puma">Puma</option>
         </select>
 
     
@@ -88,18 +85,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><a href="https://example.com/a" >Retailer A</a></td>
-              <td>$99.99</td>
-            </tr>
-            <tr>
-              <td><a href="https://example.com/a" >Retailer A</a></td>
-              <td>$99.99</td>
-            </tr>
-            <tr>
-              <td><a href="https://example.com/a" >Retailer A</a></td>
-              <td>$99.99</td>
-            </tr>
           </tbody>
         </table>
       </div>

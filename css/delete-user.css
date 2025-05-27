@@ -8,6 +8,11 @@ body {
     color: #ffffff;
 }
 
+main {
+    margin-top: 150px;
+    min-height: calc(100vh - 150px);
+}
+
 header {
     background-color: #001f3f;
     padding: 15px 30px;
@@ -26,13 +31,13 @@ header img.logo {
 }
 
 .manage-products-wrapper {
-    background-color: #cbd1f7;
-    color: rgb(109, 136, 233);
+    background-color: #d0d5ff;
+    color: rgb(100, 103, 195);
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     width: 800px;
-    margin: 120px auto 40px auto;
+    margin: 40px auto 40px auto;
 }
 
 h1 {
@@ -195,6 +200,7 @@ input[type="text"] {
     line-height: 1.4;
     display: -webkit-box;
     
+    -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
@@ -269,7 +275,7 @@ input[type="text"] {
 }
 
 .modal-content {
-    background-color: #6a7de9;
+    background-color: #d9d0ff;
     border-radius: 12px;
     margin: 5% auto;
     padding: 30px;
@@ -298,7 +304,7 @@ input[type="text"] {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid rgb(130, 153, 228);
+    border-bottom: 1px solid rgb(100, 103, 195);
 }
 
 .modal-title {
@@ -327,7 +333,7 @@ input[type="text"] {
 .form-group label {
     display: block;
     margin-bottom: 5px;
-    color: rgb(31, 38, 92);
+    color: rgb(100, 103, 195);
     font-weight: 600;
     font-size: 14px;
 }
@@ -369,7 +375,7 @@ input[type="text"] {
 .category-fields {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid rgb(120, 135, 232);
+    border-top: 1px solid rgb(100, 103, 195);
 }
 
 .category-fields h3 {
@@ -384,11 +390,14 @@ input[type="text"] {
 }
 
 @media (max-width: 768px) {
+    main {
+        margin-top: 120px;
+    }
+    
     .manage-products-wrapper {
         width: 95%;
-        margin: 100px auto 20px auto;
+        margin: 20px auto 20px auto;
         padding: 15px;
-        color: #baccf1;
     }
 
     .action-buttons {

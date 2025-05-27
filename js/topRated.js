@@ -1,4 +1,4 @@
-var a_key = 'f61891d740ceb2539535bd06a1c7936f';
+var a_key = '1a8eeccd5b43834a18870560a229cc4a6862ef492e808536a65055ca46eaba4f';
 
 function loadTopRatedProducts() {
     var xhr = new XMLHttpRequest();
@@ -13,28 +13,37 @@ function loadTopRatedProducts() {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            var response = JSON.parse(xhr.responseText);
-            if (response.status === "success") {
-                var products = response.data;
-                var topRated = [];
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.status === "success") {
+                    var products = response.data;
 
-                for (var i = 0; i < products.length; i++) {
-                    var p = products[i];
-                    var rating = parseFloat(p.average_rating);
-                    if (rating >= 5.0) {
-                        topRated.push(p);
-                    }
+                    
+                    var highRated = products.filter(function (p) {
+                        return parseFloat(p.average_rating) >= 4.9;
+                    });
+
+                    
+                    highRated.sort(function (a, b) {
+                        return parseFloat(b.average_rating) - parseFloat(a.average_rating);
+                    });
+
+                    
+                    var topRated = highRated.slice(0, 9);
+
+                    renderTopRated(topRated);
+                } else {
+                    console.error("Failed to load top-rated products:", response.message);
                 }
-
-                renderTopRated(topRated);
-            } else {
-                console.error("Failed to load top-rated products:", response.message);
+            } catch (err) {
+                console.error("Error parsing response:", err);
             }
         }
     };
 
     xhr.send(JSON.stringify(requestBody));
 }
+
 
 function renderTopRated(products) {
     var container = document.querySelector(".product-grid");

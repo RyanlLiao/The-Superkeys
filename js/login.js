@@ -1,4 +1,4 @@
-var url = "http://localhost/The-Superkeys/backend/api.php";
+var url = "/CompareIt/The-Superkeys/api.php";
 
 document.getElementById('loginForm').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -39,8 +39,8 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
                 if (json.status === "success") {
                     const data = json.data;
 
-console.log("Login success:", json);
-console.log("data.user-type:", data["user-type"]);
+                    console.log("Login success:", json);
+                    console.log("data.user-type:", data["user-type"]);
 
                     localStorage.setItem("api_key", data.apikey);
                     localStorage.setItem("user_type", data["user-type"]);

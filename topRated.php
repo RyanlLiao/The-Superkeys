@@ -11,8 +11,8 @@
 <?php include 'header.php'; ?>
   
 <body>
+  <h1>Top Rated Products</h1>
   <div class="container">
-    <h1>Top Rated Products</h1>
     <div class="product-grid">
       <div class="product-card">
         <img src="img/placeholder.png" alt="Product 1">
