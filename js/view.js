@@ -27,6 +27,17 @@ function closeModal() {
 }
 
 function submitReview() {
+    const apiKey = localStorage.getItem("api_key");
+    const userType = localStorage.getItem("user_type");
+    console.log(apiKey);
+    console.log(userType);
+    // console.log(localStorage.getItem("logged_in"));
+
+    if (!apiKey || userType != "User") {
+        alert("You must be a logged in user to submit a review.");
+         window.location.href = "login.php";
+        // return;
+    }
     var id = getProductIdFromURL();
 
     const brand = document.getElementById('brandSelect').value.trim();
@@ -55,7 +66,7 @@ function submitReview() {
                     alert("Review submitted successfully!");
                 } catch (e) {
                     console.error("Invalid JSON response:", e);
-                    alert("Error: Could not parse server response.");
+                    // alert("Error: Could not parse server response.");
                 }
             } else {
                 console.error("Submission failed with status:", xhr.status);
@@ -65,10 +76,11 @@ function submitReview() {
             closeModal();
         }
     };
+    console.log(localStorage.getItem("api_key"));
 
     const reviewBody = {
         type: "AddReview",
-        apikey: a_key,
+        apikey: apiKey,
         pid: id,
         date: today,
         rating: rating,
@@ -112,7 +124,7 @@ function loadReviews(id) {
 
                     var reviewHTML = ''
                         + '<div class="review-text">'
-                        + '<strong>User ' + review.user_id + '</strong>: ' + review.comments
+                        + '<strong>'+ review.username + '</strong>: ' + review.comments
                         + '</div>'
                         + '<div class="review-meta">'
                         + '<span class="brand">Date: ' + review.date + '</span>'
@@ -148,13 +160,13 @@ function populateRetailers(data) {
     const seen = new Set();
 
     data.forEach(entry => {
-        const retailerId = entry.retailer_id;
+        const retailerId = entry.retailer_name;
         if (!seen.has(retailerId)) {
             seen.add(retailerId);
 
             const option = document.createElement("option");
             option.value = retailerId;
-            option.textContent = `Retailer #${retailerId}`;
+            option.textContent = `${retailerId}`;
             brandSelect.appendChild(option);
         }
     });
@@ -220,7 +232,7 @@ window.onload = function () {
                     var entry = prices[i];
                     var row = ''
                         + '<tr>'
-                        + '<td><a href="' + entry.url + '" target="_blank">Retailer #' + entry.retailer_id + '</a></td>'
+                        + '<td><a href="' + entry.url + '" target="_blank">' + entry.retailer_name + '</a></td>'
                         + '<td>R' + entry.price.toFixed(2) + '</td>'
                         + '</tr>';
                     rows.push(row);

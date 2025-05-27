@@ -147,7 +147,7 @@ function addWishlist(button) {
         "apikey": localStorage.getItem("api_key"),
         "pid": pid
     });
-
+    //need to redirect is they aren't logged in
     wish.onload = () => {
         if (wish.readyState == 4 && wish.status == 200) {
             var response = JSON.parse(wish.responseText);
