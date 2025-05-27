@@ -26,7 +26,7 @@
         <div class="shortcut-buttons">
             <a href="manageCategories.php" class="btn">Manage Categories</a>
             <a href="manage-products.php" class="btn">Manage Products</a>
-            <a href="manageUserDel.php" class="btn">Manage Users</a>
+            <a href="managerUserDel.php" class="btn">Manage Users</a>
         </div>
     </div>
 
