@@ -41,7 +41,7 @@ function displayProducts(data) {
 
 function getTypes(category, callback) {
     var types = new XMLHttpRequest();
-    types.open("POST", "/COS221/Compare_It_Backend/The-Superkeys/api.php", true);
+    types.open("POST", "/CompareIt/The-Superkeys/api.php", true);
     types.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({
@@ -139,7 +139,7 @@ function addWishlist(button) {
     var pid = button.closest(".product").getAttribute("data-id");
 
     var wish = new XMLHttpRequest();
-    wish.open("POST", "/COS221/Compare_It_Backend/The-Superkeys/api.php", true);
+    wish.open("POST", "/CompareIt/The-Superkeys/api.php", true);
     wish.setRequestHeader("Content-type", "application/json");
 
     var body = JSON.stringify({

@@ -41,11 +41,15 @@
             </select>
 
             <select name="filter-by-price"  onchange="priceFilter(value)">
-                <option value="">Range</option>
-                <option value="0-5000">0-5000</option>
+                <option value="">Price Range (R)</option>
+                <option value="0-2500">0-2500</option>
+                <option value="2500-5000">2500-5000</option>
                 <option value="5000-10000">5000-10000</option>
                 <option value="10000-20000">10000-20000</option>
-                <option value="20000-20000">20000-20000</option>
+                <option value="20000-30000">20000-30000</option>
+                <option value="30000-40000">30000-40000</option>
+                <option value="40000-50000">40000-50000</option>
+                <option value="50000-60000">50000-60000</option>
             </select>
 
             
