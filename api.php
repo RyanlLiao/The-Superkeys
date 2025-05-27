@@ -1033,22 +1033,20 @@ class API
             return;
         }
         
+        //  $result =$statement->get_result();
+        // $row = $result->fetch_assoc();
+        // $statement->close();
+
+        // if ($row === null || !isset($row['count'])) {
+        //     echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
+        //     return;
+        // }
 
         return (int)$row["count"];
     }
-
-        $row = $result->fetch_assoc();
-        $statement->close();
-
-        if ($row === null || !isset($row['count'])) {
-            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
-            return;
-        }
+       
 
 
-        return (int) $row["count"];
-    }
-    //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
         $query = "SELECT id FROM Person WHERE api_key = ?";
