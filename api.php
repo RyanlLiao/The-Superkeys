@@ -66,7 +66,8 @@ class API
             "CreateCategory", 
             "UpdateCategory", 
             "RemoveCategory",
-            "GetCategories"
+            "GetCategories",
+            "UpdateProducts"
         ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
@@ -467,8 +468,19 @@ class API
                         "attributes" => $attributes
                     ];
                 }
+            case "UpdateProducts":
+                $apikey = $data['apikey'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+                $pid = $data['pid'] ?? null;
+                $rid = $data['rid'] ?? null;
+                $price = $data['price'] ?? null;
+                $url = $data['url'] ?? null;
+                if (empty($pid) || empty($rID) || empty($price) || empty($url)) {
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing POST Parameters", null);
+                }
 
-                return $this->response("HTTP/1.1 200 OK", "success", "", $categoriesWithAttributes);
+                return $this->updateProducts($pid, $rid, $price, $url);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
@@ -1444,6 +1456,21 @@ class API
         $pstmt->close();
 
         return $this->response("HTTP/1.1 200 OK", "success", "", "User deleted successfully");
+    }
+
+    private function updateProduct($pid, $rid, $price, $url){
+        $query = "INSERT INTO Sold_by (retailer_id, product_id, price, url) VALUES (?, ?, ?, ?)";
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt -> bind_param("iids", $rid, $pid, $price, $url);
+        if (!$pstmt->execute()) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't insert product", null);
+        }
+        $pstmt->close();
+
+        return $this->response("HTTP/1.1 200 OK", "success", "", "Product updated successfully");
     }
 }
 
