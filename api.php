@@ -738,7 +738,7 @@ class API
 
     private function getProduct($pid)
     {
-        $query = "SELECT * FROM Product NATURAL JOIN Sold_by WHERE product_id = ?";
+        $query = "SELECT * FROM getProducts_View WHERE product_id = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $pid);
 
@@ -1085,7 +1085,7 @@ class API
 
     //    var_dump($userID);
         // Check if user_id exists in User table
-        $query = 'SELECT user_id FROM User WHERE id = ?';
+        $query = 'SELECT id FROM User WHERE user_id = ?';
         // var_dump($query);
 
         $pstmt = $this->connection->prepare($query);
