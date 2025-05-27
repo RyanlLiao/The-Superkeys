@@ -4,15 +4,15 @@ async function loadCounts() {
     // const countTypes = ['Reviews'];
     // const countTypes = ['Products'];
     // const countTypes = ['Users'];
-    
+
     const responseData = {};
-    const apiKey = localStorage.getItem("api_key"); 
+    const apiKey = localStorage.getItem("api_key");
 
     for (const typeToCount of countTypes) {
       const requestBody = {
-        type: "Count", 
+        type: "Count",
         count_type: "count",
-        count: typeToCount, 
+        count: typeToCount,
         apikey: apiKey
       };
 
@@ -31,7 +31,7 @@ async function loadCounts() {
           try {
             const errorData = await response.json();
             errorInfo = `Server error for ${typeToCount}: ${errorData.message || JSON.stringify(errorData)}`;
-          } catch (e) { 
+          } catch (e) {
             try {
               const errorText = await response.text();
               errorInfo += ` Server response (text): ${errorText.substring(0, 200)}...`;
@@ -54,16 +54,16 @@ async function loadCounts() {
 
       } catch (errorInLoop) {
         console.error(`Error processing count for ${typeToCount}:`, errorInLoop.message);
-        
+
         if (errorInLoop instanceof SyntaxError && response) {
-            console.error("This usually means the server (PHP) sent HTML (an error message) instead of JSON.");
-            try {
-                const clonedResponse = response.clone();
-                const errorHtml = await clonedResponse.text();
-                console.error("Raw server response (likely PHP error HTML):", errorHtml.substring(0, 500) + "...");
-            } catch (textReadError) {
-                console.error("Could not read the raw server response text after JSON parse error.", textReadError);
-            }
+          console.error("This usually means the server (PHP) sent HTML (an error message) instead of JSON.");
+          try {
+            const clonedResponse = response.clone();
+            const errorHtml = await clonedResponse.text();
+            console.error("Raw server response (likely PHP error HTML):", errorHtml.substring(0, 500) + "...");
+          } catch (textReadError) {
+            console.error("Could not read the raw server response text after JSON parse error.", textReadError);
+          }
         }
         responseData[typeToCount] = 'Error';
       }

@@ -55,7 +55,7 @@ class ProductManager {
             return apikey;
         }
         
-        console.error('No API key available');
+      //  console.error('No API key available');
         return null;
     }
 
@@ -70,19 +70,19 @@ class ProductManager {
         }
 
         // Debug: Check what's actually stored
-        console.log('=== DEBUGGING STORAGE ===');
-        console.log('localStorage user_type:', localStorage.getItem('user_type'));
-        console.log('sessionStorage user_type:', sessionStorage.getItem('user_type'));
-        console.log('localStorage api_key:', localStorage.getItem('api_key'));
-        console.log('Current apikey:', this.apikey);
+        // console.log('=== DEBUGGING STORAGE ===');
+        // console.log('localStorage user_type:', localStorage.getItem('user_type'));
+        // console.log('sessionStorage user_type:', sessionStorage.getItem('user_type'));
+        // console.log('localStorage api_key:', localStorage.getItem('api_key'));
+        // console.log('Current apikey:', this.apikey);
         
         // Check if user is a manager - specifically look for user_type = "Manager"
         const userType = localStorage.getItem('user_type') || sessionStorage.getItem('user_type');
-        console.log('User type from storage:', userType);
+      //  console.log('User type from storage:', userType);
         
         // If user_type is not stored or not "Manager", verify via API call
         if (userType !== 'Manager') {
-            console.log('User type not "Manager" or not found, verifying via API...');
+          //  console.log('User type not "Manager" or not found, verifying via API...');
             
             // Try to test manager privileges by attempting to get all users (manager-only function)
             try {
@@ -91,7 +91,7 @@ class ProductManager {
                     apikey: this.apikey
                 });
                 
-                console.log('Manager test response:', testResponse);
+               // console.log('Manager test response:', testResponse);
                 
                 // If this succeeds, user is a manager
                 if (testResponse.status === 'success') {
@@ -210,7 +210,7 @@ class ProductManager {
 
     async makeApiRequest(data) {
         try {
-            console.log('Making API request:', data);
+          //  console.log('Making API request:', data);
             
             const response = await fetch(this.apiEndpoint, {
                 method: 'POST',
@@ -220,10 +220,10 @@ class ProductManager {
                 body: JSON.stringify(data)
             });
 
-            console.log('Response status:', response.status);
+           // console.log('Response status:', response.status);
             
             const responseText = await response.text();
-            console.log('Raw response:', responseText);
+          //  console.log('Raw response:', responseText);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status} - ${responseText}`);
@@ -428,7 +428,7 @@ class ProductManager {
             product_name: productName,
             description: formData.get('description') || '',
             availability: formData.get('availability') === 'true' ? 1 : 0,
-            images: formData.get('images') || '',
+            images:[formData.get('images')]|| '',
             category: [category],
             retailer_id: parseInt(retailerId),
             price: parseFloat(price),
@@ -442,7 +442,7 @@ class ProductManager {
                 kHz: formData.get('kHz') || '0',
                 resolution: formData.get('resolution') || ''
             };
-        } else if (category === 'Electronic_Accessoried') {
+        } else if (category === 'Electronic_Accessories') {
             productData.parameters = {
                 accessory_type: formData.get('accessory_type') || '',
                 compatibility: formData.get('compatibility') || ''

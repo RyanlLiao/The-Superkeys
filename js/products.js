@@ -18,8 +18,14 @@ function displayProducts(data) {
 
     for (var i = 0; i < data.length; i++) {
         var product = data[i];
-
+        
+        
         var images = JSON.parse(product.images);
+        console.log(typeof images);
+
+        if(typeof images == "string")
+            images = [images];
+
         var mainImage = images.length > 0 ? images[0] : "img/placeholder.jpg";
 
         var category = JSON.parse(product.Category);
