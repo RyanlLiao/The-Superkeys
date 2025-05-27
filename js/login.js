@@ -40,10 +40,11 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
                     const data = json.data;
 
                     console.log("Login success:", json);
-                    console.log("data.user-type:", data["user-type"]);
+                    console.log(data);
+                    console.log("data.user-type:", data.user_type);
 
                     localStorage.setItem("api_key", data.apikey);
-                    localStorage.setItem("user_type", data["user-type"]);
+                    localStorage.setItem("user_type", data.user_type);
 
                     alert("Successfully logged in! Welcome");
                     window.location.href = "products.php";
