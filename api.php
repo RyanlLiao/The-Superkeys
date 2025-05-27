@@ -738,11 +738,11 @@ class API
 
         if ($category === "Audio_Visual_Equipment") {
             $placeholders .= ",?,?";
-            $vartypes .= "ids,";
+            $vartypes .= "ids";
             $column .= "product_id,kHz,resolution";
-        } else if ($category === 'Electronic_Accessoried') {
+        } else if ($category === "Electronic_Accessories") {
             $placeholders .= ",?,?";
-            $vartypes .= "iii";
+            $vartypes .= "iss";
             $column .= "product_id,accessory_type,compatibility";
         } else if ($category === "Computing_Devices") {
             $placeholders .= ",?,?,?";
