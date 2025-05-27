@@ -2,64 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users</title>
-    <link rel="stylesheet" href="css/delete-user.css">
+    <link rel="stylesheet" href="css/user-management.css">
 </head>
 
 <body>
     <?php include 'header.php'; ?>
 
-    <main class="content-wrapper">
-        <section class="management-panel">
-            <h1 class="section-title">Managez Users</h1>
+    <main class="manage-users-wrapper">
+        <h1>Manage & Delete Users</h1>
 
-            <div class="search-section">
-                <label for="searchInput">Search Users:</label>
-                <input type="text" id="searchInput" placeholder="Search by email">
-            </div>
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="refreshBtn">Refresh Users</button>
+        </div>
 
-            <table class="user-table">
-                <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>Full Name</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <!--<th>Delete</th>-->
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Static mock data, replace with dynamic PHP loop later -->
-                    <tr>
-                        <td>1</td>
-                        <td>Ayesha Patel</td>
-                        <td>ayeshap</td>
-                        <td>ayesha@example.com</td>
-                        <td>Customer</td>
-                        <!--<td><button class="delete-btn">Delete</button></td>-->
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>John Dlamini</td>
-                        <td>johnd</td>
-                        <td>john.d@example.com</td>
-                        <td>Customer</td>
-                        <!--<td><button class="delete-btn">Delete</button></td>-->
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Leah Mokoena</td>
-                        <td>leahm</td>
-                        <td>leah.m@example.com</td>
-                        <td>Admin</td>
-                        <!--<td><button class="delete-btn">Delete</button></td>-->
-                    </tr>
-                </tbody>
-            </table>
+        <div class="user-count" id="userCount">Loading...</div>
 
-            <div id="delete-feedback" class="feedback"></div>
-        </section>
+        <div class="search-section">
+            <label for="searchInput">Search Users:</label>
+            <input type="text" id="searchInput" placeholder="Search by name, username, or email">
+        </div>
+
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name & Phone</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="5" class="loading">Loading users...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div id="delete-feedback" class="feedback"></div>
     </main>
+
+    <script src="js/user-management.js"></script>
 </body>
 </html>
