@@ -46,3 +46,41 @@ function countRatings(products) {
 
     return ratingCounts;
 }
+
+function renderChart(ratingCounts) {
+    var ctx = document.getElementById('myChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+            datasets: [{
+                label: 'Number of products per rating',
+                data: [
+                    ratingCounts[1],
+                    ratingCounts[2],
+                    ratingCounts[3],
+                    ratingCounts[4],
+                    ratingCounts[5]
+                ],
+                backgroundColor: [
+                    '#ff4d4d', '#ff944d', '#ffe44d', '#a3ff4d', '#4dff88'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    precision: 0
+                }
+            }
+        }
+    });
+}
+
+window.onload = function () {
+    fetchAndGraphRatings();
+};
