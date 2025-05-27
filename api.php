@@ -1013,7 +1013,8 @@ class API
         // Join Review with Person to get username
         $query = "SELECT Review.*, Person.username 
             FROM Review 
-            JOIN Person ON Review.user_id = Person.id 
+            JOIN User ON Review.user_id = User.user_id 
+            JOIN Person ON User.id = Person.id 
             WHERE 1=1";
         $params = [];
         $types = "";
@@ -1083,33 +1084,6 @@ class API
         }
         $pstmt->close();
 
-    //    var_dump($userID);
-        // Check if user_id exists in User table
-        $query = 'SELECT id FROM User WHERE user_id = ?';
-        // var_dump($query);
-
-        $pstmt = $this->connection->prepare($query);
-        if (!$pstmt) {
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
-        }
-        $pstmt->bind_param('i', $userID);
-        $pstmt->execute();
-        $result = $pstmt->get_result();
-        $result = $result->fetch_assoc();
-        // var_dump($result);
-
-        // $pstmt->store_result();
-        // if ($pstmt->num_rows == 0) {
-        //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
-        // }
-        // echo "binding\n";
-       // $pstmt->bind_result($rID);
-        
-       // var_dump($rID);
-        $pstmt->close();
-
-
-    //    var_dump($userID);
         // Check if user_id exists in User table
         $query = 'SELECT user_id FROM User WHERE id = ?';
         // var_dump($query);
@@ -1154,7 +1128,7 @@ class API
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         }
         $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
-        $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
+        // $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
         $pstmt->execute();
         if ($pstmt->affected_rows == 0) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
