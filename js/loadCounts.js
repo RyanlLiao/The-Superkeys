@@ -1,7 +1,6 @@
 async function loadCounts() {
   try {
     const countTypes = ['Users', 'Products', 'Reviews'];
-    // const countTypes = ['Reviews'];
     const responseData = {};
 
     const apiKey = "1a8eeccd5b43834a18870560a229cc4a6862ef492e808536a65055ca46eaba4f";
