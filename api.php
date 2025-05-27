@@ -507,7 +507,7 @@ class API
 
         $usertype = ($this->userCheck($result['api_key'])) ? "Manager" : "User";
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user-type' => $usertype, "user_id" => $result['id']]);
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user_type' => $usertype, "user_id" => $result['id']]);
     }
 
     //adds a user to the database of registered users
@@ -820,39 +820,117 @@ class API
         return $result;
     }
 
+    // private function count($data)
+    // {
+    //     // echo "COUNTING...";
+    //     $type = $data['count_type'];
+    //     $allowed = $this->getWhitelist($type);
+    //     //var_dump($allowed);
+
+    //     if (isset($data['count'])){
+    //         $type = array_intersect($allowed, [$data["count"]]);
+    //       //  echo "here";
+    //         $type = $type[0];
+    //     }
+    //     //var_dump($type);
+    //     if (empty($type))
+    //         return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+
+    //     $table = "";
+
+        
+    //     switch ($type) {
+    //         case "Users":
+    //             $table = "Person";
+    //             break;
+
+    //         case "Products":
+    //             $table = "Product";
+
+    //             break;
+    //         case "Reviews":
+    //             $table = "Review";
+    //             break;
+
+    //         case "Rating":
+    //           //  echo "here rating";
+    //             $query = "SELECT CASE 
+    //             WHEN rating < 1 THEN '0-1' 
+    //             WHEN rating < 2 THEN '1-2'
+    //             WHEN rating < 3 THEN '2-3'
+    //             WHEN rating < 4 THEN '3-4' 
+    //             WHEN rating < 5 THEN '4-5'
+    //             ELSE '5'
+                
+    //             END AS rating_range,
+    //             COUNT(*) as count
+                
+    //             FROM Review
+    //             GROUP BY rating_range
+    //             ORDER BY rating_range;";
+
+    //             $statement = $this->connection->prepare($query);
+    //             if(!$statement)
+    //                 return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$this->connection->error}", null);
+    //             if (!$statement->execute())
+    //                 return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+    //             $result = $statement->get_result();
+    //             $result = $result->fetch_all(MYSQLI_ASSOC);
+
+    //            // var_dump($result);
+
+    //             return $result;
+
+    //     }
+    //     ;
+
+    //     $query = "SELECT  Count(*) as count FROM $table";
+    //     $statement = $this->connection->prepare($query);
+    //     //var_dump($query);
+    //     if (!$statement->execute())
+    //         return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+    //     $result = $statement->get_result();
+    //     $result = $result->fetch_assoc();
+
+    //     // var_dump($result);
+    //     return (int)$result["count"];
+    // }
+
     private function count($data)
     {
-        // echo "COUNTING...";
-        $type = $data['count_type'];
-        $allowed = $this->getWhitelist($type);
-        //var_dump($allowed);
+        $whitelist_type = $data['count_type']; // e.g., "count"
+        $allowed_values = $this->getWhitelist($whitelist_type);
 
-        if (isset($data['count'])){
-            $type = array_intersect($allowed, [$data["count"]]);
-            echo "here";
-            $type = $type[0];
+        $type_to_count = null; 
+
+        if (isset($data['count'])) {
+            $intersection = array_intersect($allowed_values, [$data["count"]]);
+            if (!empty($intersection)) {
+                $type_to_count = reset($intersection); 
+            }
         }
-        // var_dump($type);
-        if (empty($type))
-            return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+
+        if (empty($type_to_count)) {
+            echo $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type specified: " . htmlspecialchars($data['count'] ?? 'NULL'), null);
+            return;
+        }
 
         $table = "";
-
-        switch ($type) {
+        
+        // Use $type_to_count in your switch
+        switch ($type_to_count) {
             case "Users":
                 $table = "Person";
                 break;
-
             case "Products":
                 $table = "Product";
-
                 break;
             case "Reviews":
                 $table = "Review";
                 break;
-
             case "Rating":
-              //  echo "here rating";
                 $query = "SELECT CASE 
                 WHEN rating < 1 THEN '0-1' 
                 WHEN rating < 2 THEN '1-2'
@@ -860,42 +938,53 @@ class API
                 WHEN rating < 4 THEN '3-4' 
                 WHEN rating < 5 THEN '4-5'
                 ELSE '5'
-                
                 END AS rating_range,
                 COUNT(*) as count
-                
                 FROM Review
                 GROUP BY rating_range
                 ORDER BY rating_range;";
 
                 $statement = $this->connection->prepare($query);
-                if(!$statement)
-                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$this->connection->error}", null);
-                if (!$statement->execute())
-                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
-
+                if(!$statement) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing rating query: {$this->connection->error}", null);
+                    return;
+                }
+                if (!$statement->execute()) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing rating query: {$statement->error}", null);
+                    return;
+                }
                 $result = $statement->get_result();
-                $result = $result->fetch_all(MYSQLI_ASSOC);
-
-                var_dump($result);
-
-                return $result;
+                $rating_data = $result->fetch_all(MYSQLI_ASSOC);
+                $statement->close();
+                return $rating_data;
 
         }
-        ;
 
-        $query = "SELECT  Count(*) as count FROM $table";
+        $query = "SELECT Count(*) as count FROM `$table`"; 
         $statement = $this->connection->prepare($query);
-        var_dump($query);
-        if (!$statement->execute())
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+        
+        if (!$statement) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing count query for $table: {$this->connection->error}", null);
+            return;
+        }
+        if (!$statement->execute()) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing count query for $table: {$statement->error}", null);
+            return;
+        }
 
         $result = $statement->get_result();
-        $result = $result->fetch_assoc();
+        $row = $result->fetch_assoc();
+        $statement->close();
 
-        // var_dump($result);
-        return $result["count"];
+        if ($row === null || !isset($row['count'])) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
+            return;
+        }
+        
+
+        return (int)$row["count"];
     }
+
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
@@ -1124,7 +1213,7 @@ class API
             $pstmt->bind_result($userID);
             $pstmt->fetch();
         } else {
-            return $this->response("HTTP/1.1 404 NOT FOUND USER", "error", "Invalid API key", null);
+            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
         $pstmt->close();
 
