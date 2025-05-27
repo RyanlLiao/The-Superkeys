@@ -74,7 +74,7 @@
                         <select id="category" name="category" required onchange="toggleCategoryFields()">
                             <option value="">Select Category</option>
                             <option value="Audio_Visual_Equipment">Audio Visual Equipment</option>
-                            <option value="Electronic_Accessoried">Electronic Accessories</option>
+                            <option value="Electronic_Accessories">Electronic Accessories</option>
                             <option value="Computing_Devices">Computing Devices</option>
                         </select>
                     </div>

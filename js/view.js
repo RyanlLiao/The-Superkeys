@@ -214,7 +214,13 @@ window.onload = function () {
                 populateRetailers(prices);
 
                 const imgCont = document.querySelector(".carousel");
-                const images = JSON.parse(product.images || "[]");
+                var images = JSON.parse(product.images || "[]");
+               
+                console.log(images);
+                if (typeof images == "string")
+                    images = [images];
+
+                console.log(images);
                 imgCont.innerHTML = images.map((src, i) =>
                     `<img src="${src}" class="carousel-img ${i === 0 ? 'active' : ''}" alt="Product Image ${i + 1}">`
                 ).join('');
