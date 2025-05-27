@@ -35,7 +35,6 @@ function submitReview() {
 
     if (!apiKey || userType != "User") {
         alert("You must be a logged in user to submit a review.");
-         window.location.href = "login.php";
         // return;
     }
     var id = getProductIdFromURL();
