@@ -25,7 +25,7 @@ function fetchAndGraphRatings() {
     };
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://localhost/The-Superkeys/backend/api.php", true);
+    xhr.open("POST", "/CompareIt/The-Superkeys/api.php", true);
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onreadystatechange = function () {

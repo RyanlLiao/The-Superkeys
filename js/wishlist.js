@@ -189,7 +189,7 @@ class WishlistManager {
                 ${description ? `<p class="wishlist-description">${description}</p>` : ''}
                 <p class="wishlist-availability">
                     <span class="availability-status ${availability ? 'in-stock' : 'out-of-stock'}">
-                        ${availability ? '✅ In Stock' : '❌ Out of Stock'}
+                        ${availability ? 'In Stock' : 'Out of Stock'}
                     </span>
                 </p>
                 <a href="view.php?id=${productId}"><p>Tap for more</p></a>
@@ -241,7 +241,7 @@ class WishlistManager {
         const originalText = removeBtn.innerHTML;
         
         // Show loading state
-        removeBtn.innerHTML = '⏳ Removing...';
+        removeBtn.innerHTML = 'Removing...';
         removeBtn.disabled = true;
 
         try {
@@ -445,7 +445,7 @@ async function addToWishlist(productId) {
         
         if (result.status === 'success') {
             if (typeof showNotification === 'function') {
-                showNotification('Product added to wishlist! ❤️', 'success');
+                showNotification('Product added to wishlist! ', 'success');
             } else {
                 alert('Product added to wishlist!');
             }
