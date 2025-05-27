@@ -507,7 +507,7 @@ class API
 
         $usertype = ($this->userCheck($result['api_key'])) ? "Manager" : "User";
 
-        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user_type' => $usertype, "user_id" => $result['id']]);
+        return $this->response("HTTP/1.1 200 OK", "success", "", ['apikey' => $result['api_key'], 'username' => $result['username'], 'user-type' => $usertype, "user_id" => $result['id']]);
     }
 
     //adds a user to the database of registered users
@@ -1124,7 +1124,7 @@ class API
             $pstmt->bind_result($userID);
             $pstmt->fetch();
         } else {
-            return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
+            return $this->response("HTTP/1.1 404 NOT FOUND USER", "error", "Invalid API key", null);
         }
         $pstmt->close();
 
