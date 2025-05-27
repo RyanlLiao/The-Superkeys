@@ -30,14 +30,12 @@
         </div>
     </div>
 
-<div class="dashboard-content">
-    <div class="card">
-        <h2>Top Rated Products</h2>
-        <ul>
-            <li>Product A 4.9</li>
-            <li>Product B 4.8</li>
-            <li>Product C 4.7</li>
-        </ul>
+    <div class="dashboard-content">
+        <div class="card">
+            <h2>Top Rated Products</h2>
+            <ul>
+                <h4><a href="topRated.php" class="card-title-link">Click here</a></h4>
+            </ul>
     </div>
 
     <div class="card">
@@ -51,23 +49,6 @@
                 <li>Total Reviews: <span id="count-reviews">Loading...</span></li>
         </ul>
     </div>
-
-    <!-- <div class="card">
-        <h2>Recent Activity</h2>
-        <ul>
-            <li>User "jane_doe" added a review</li>
-            <li>Admin updated Product A price</li>
-            <li>New stockist registered</li>
-        </ul>
-    </div> -->
-    <!-- Implement Later... -->
-
-    <div class="card">
-        <h2>Price History</h2>
-        <p>Chart or detailed insights can go here.</p>
-    </div>
-
-
 </div>
 
     <div class="card full-width" id="chart-container">

@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 $userName = $_SESSION['user_name'] ?? 'Valued Customer';
@@ -8,46 +9,28 @@ $userName = $_SESSION['user_name'] ?? 'Valued Customer';
     <meta charset="UTF-8">
     <title>Customer Dashboard</title>
     <link rel="stylesheet" href="css/customerDashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/graphManager.js" defer></script>
 </head>
 <body>
     <?php include 'header.php'; ?>
+
     <div class="dashboard-container">
-        <div class="card welcome-card">
-            <h2>Welcome back, <?php echo htmlspecialchars($userName); ?>!</h2>
-            <p>We're glad to see you again.</p>
-        </div>
 
-        <div class="dashboard-content">
-            <div class="card stat-card">
-                <h3>Price History</h3>
-                <p>Click here to view</p>
+        <div class="cards-row">
+            <div class="card">
+                <h2><a href="wishlist.php" class="card-title-link">Wishlist</a></h2>
+            </div>
+
+            <div class="card">
+                <h2><a href="topRated.php" class="card-title-link">Top Rated Products</a></h2>
             </div>
         </div>
 
-        <div class="card stat-card">
-                <h3>Top Rated Products</h3>
-                <p>Click here to view</p>
-            </div>
-            
+        <div class="card full-width" id="chart-container">
+            <canvas id="myChart"></canvas>
+        </div>
 
-        <!-- Recommended Products -->
-        <!-- <div class="card">
-            <h2>Recommended for You</h2>
-            <div class="recommended-products">
-                <div class="product-card">
-                    <img src="product1.jpg" alt="Product 1">
-                    <p>Product 1</p>
-                    <button>View</button>
-                </div>
-                <div class="product-card">
-                    <img src="product2.jpg" alt="Product 2">
-                    <p>Product 2</p>
-                    <button>View</button>
-                </div>
-            </div>
-        </div> -->
-
-      
     </div>
 </body>
 </html>
