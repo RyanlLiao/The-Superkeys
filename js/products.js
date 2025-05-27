@@ -133,8 +133,8 @@ function fetchProducts(callback) {
 }
 
 function addWishlist(button) {
-    var apiKey=localStorage.getItem("api_key");
-    if(apiKey == null){
+    var apiKey = localStorage.getItem("api_key");
+    if (apiKey == null) {
         alert("Please log in.");
         window.location.href = "login.php";
     }
@@ -154,12 +154,34 @@ function addWishlist(button) {
     //need to redirect is they aren't logged in
     wish.onload = () => {
         console.log(wish.responseText);
+
+        var response = JSON.parse(wish.responseText);
+
         if (wish.readyState == 4 && wish.status == 200) {
-            var response = JSON.parse(wish.responseText);
-            alert(response.data);
+
+            try {
+
+                if (response.status === "success") {
+                    alert(response.data);
+                } else {
+                    alert(response.message);
+                }
+            } catch (e) {
+                console.error("Invalid JSON response", e);
+                alert("An unexpected error occurred.");
+            }
+
         }
-        else
-            console.error(wish.responseText);
+        else {
+            // alert(response.data);
+            console.log(response.message);
+            if (response.message == "Product already in wishlist") {
+                alert("Product already in wishlist :)");
+                return;
+            }
+            alert("Request failed. Please try again.");
+            console.log(wish.responseText);
+        }
     }
 
     wish.send(body);
@@ -171,10 +193,10 @@ window.onload = function () {
     fetchProducts(() => {
         var button = document.querySelectorAll(".add");
         button.forEach((item) => {
-           // console.log(item);
+            // console.log(item);
 
             item.addEventListener("click", () => {
-               // console.log("HERE");
+                // console.log("HERE");
                 addWishlist(item);
 
             });
@@ -260,7 +282,7 @@ function priceFilter(range) {
     var product = document.querySelectorAll(".product");
     var found = false;
 
-   // console.log("min: " + min + "\nmax: " + max);
+    // console.log("min: " + min + "\nmax: " + max);
 
     for (var i = 0; i < product.length; i++) {
         var price = parseFloat((product[i].querySelector("#product_price").innerText).substring(1));

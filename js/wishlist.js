@@ -1,11 +1,10 @@
 class WishlistManager {
     constructor() {
-        this.apiEndpoint = "api.php"; 
+        this.apiEndpoint = "/CompareIt/The-Superkeys/api.php"; 
         this.apikey = localStorage.getItem('api_key') || null;
         this.init();
     }
 
-    
     
     async init() {
         if (!this.apikey) 

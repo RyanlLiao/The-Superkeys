@@ -18,7 +18,7 @@ async function loadCounts() {
 
       let response;
       try {
-        response = await fetch('http://localhost/The-Superkeys/backend/api.php', {
+        response = await fetch("/CompareIt/The-Superkeys/api.php", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

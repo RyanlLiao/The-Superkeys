@@ -219,7 +219,8 @@ window.onload = function () {
                 var html = ''
                     + '<h1>' + product.product_name + '</h1>'
                     + '<p><strong>Description:</strong> ' + product.description + '</p>'
-                    + '<p><strong>Average rating:</strong> ' + renderStars(product.average_rating) + ' (' + product.average_rating + ')</p>';
+                    + '<p><strong>Average rating:</strong> ' + renderStars(product.average_rating) + ' (' + product.average_rating + ')</p>'
+                    + '<button class="add-category-btn" onclick="addWishlist()" >Add to Wishlist</button>';
 
                 container.innerHTML = html;
 
@@ -246,4 +247,60 @@ window.onload = function () {
 
     loadReviews(id);
 };
+
+function addWishlist() {
+    var apiKey = localStorage.getItem("api_key");
+    if (apiKey == null) {
+        alert("Please log in.");
+        window.location.href = "login.php";
+    }
+
+    //var button = event.currentTarget;
+    var pid = getProductIdFromURL();
+
+    var wish = new XMLHttpRequest();
+    wish.open("POST", "/CompareIt/The-Superkeys/api.php", true);
+    wish.setRequestHeader("Content-type", "application/json");
+
+    var body = JSON.stringify({
+        "type": "AddWishlist",
+        "apikey": localStorage.getItem("api_key"),
+        "pid": pid
+    });
+    //need to redirect if they aren't logged in
+    wish.onload = () => {
+        console.log(wish.responseText);
+
+        var response = JSON.parse(wish.responseText);
+
+        if (wish.readyState == 4 && wish.status == 200) {
+
+            try {
+
+                if (response.status === "success") {
+                    alert(response.data);
+                } else {
+                    alert(response.message);
+                }
+            } catch (e) {
+                console.error("Invalid JSON response", e);
+                alert("An unexpected error occurred.");
+            }
+
+        }
+        else {
+            // alert(response.data);
+            console.log(response.message);
+            if (response.message == "Product already in wishlist") {
+                alert("Product already in wishlist :)");
+                return;
+            }
+            alert("Request failed. Please try again.");
+            console.log(wish.responseText);
+        }
+    }
+
+    wish.send(body);
+
+}
 
