@@ -682,7 +682,7 @@ class API
 
     private function getProduct($pid)
     {
-        $query = "SELECT * FROM Product NATURAL JOIN Sold_by WHERE product_id = ?";
+        $query = "SELECT * FROM getProducts WHERE product_id = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $pid);
 
