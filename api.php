@@ -65,7 +65,8 @@ class API
             "DeleteUser",
             "CreateCategory", 
             "UpdateCategory", 
-            "RemoveCategory"
+            "RemoveCategory",
+            "GetCategories"
         ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
@@ -396,7 +397,7 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error updating category: " . $this->connection->error, null);
                 }
-                break;
+                // break;
             case "RemoveCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
@@ -413,6 +414,61 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error removing category: " . $this->connection->error, null);
                 }
+            case "GetCategories":
+                $apikey = $data['apikey'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+
+                // 1. Get all category arrays from Product table
+                $query = "SELECT Category FROM Product";
+                $result = $this->connection->query($query);
+                $categories = [];
+                if ($result) {
+                    while ($row = $result->fetch_assoc()) {
+                        $cat = $row['Category'];
+                        if ($cat === null || $cat === "") continue;
+                        //have to decode as JSON array apparently?
+                        $decoded = json_decode($cat, true);
+                        if (is_array($decoded) && isset($decoded[0])) {
+                            $first = trim($decoded[0]);
+                            if ($first !== "" && !in_array($first, $categories)) {
+                                $categories[] = $first;
+                            }
+                        }
+                    }
+                }
+
+                $existingTables = [];
+                if (!empty($categories)) {
+                    $tableQuery = "SHOW TABLES";
+                    $tableResult = $this->connection->query($tableQuery);
+                    $allTables = [];
+                    if ($tableResult) {
+                        while ($row = $tableResult->fetch_array()) {
+                            $allTables[] = $row[0];
+                        }
+                    }
+                    $existingTables = array_values(array_intersect($categories, $allTables));
+                }
+
+                // 3. For each existing table, fetch its columns
+                $categoriesWithAttributes = [];
+                foreach ($existingTables as $table) {
+                    $colQuery = "SHOW COLUMNS FROM `$table`";
+                    $colResult = $this->connection->query($colQuery);
+                    $attributes = [];
+                    if ($colResult) {
+                        while ($colRow = $colResult->fetch_assoc()) {
+                            $attributes[] = $colRow['Field'];
+                        }
+                    }
+                    $categoriesWithAttributes[] = [
+                        "category" => $table,
+                        "attributes" => $attributes
+                    ];
+                }
+
+                return $this->response("HTTP/1.1 200 OK", "success", "", $categoriesWithAttributes);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
@@ -1026,6 +1082,32 @@ class API
             $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
         $pstmt->close();
+
+    //    var_dump($userID);
+        // Check if user_id exists in User table
+        $query = 'SELECT user_id FROM User WHERE id = ?';
+        // var_dump($query);
+
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt->bind_param('i', $userID);
+        $pstmt->execute();
+        $result = $pstmt->get_result();
+        $result = $result->fetch_assoc();
+        // var_dump($result);
+
+        // $pstmt->store_result();
+        // if ($pstmt->num_rows == 0) {
+        //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
+        // }
+        // echo "binding\n";
+       // $pstmt->bind_result($rID);
+        
+       // var_dump($rID);
+        $pstmt->close();
+
         //check if product id exists
         $query = 'SELECT product_id FROM Product WHERE product_id = ?';
         $pstmt = $this->connection->prepare($query);
@@ -1045,7 +1127,7 @@ class API
         if (!$pstmt) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         }
-        $pstmt->bind_param('iisss', $pid, $userID, $date, $rating, $comment);
+        $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
         $pstmt->execute();
         if ($pstmt->affected_rows == 0) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
