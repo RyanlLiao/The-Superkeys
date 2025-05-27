@@ -1,5 +1,5 @@
-// var url = "/CompareIt/The-Superkeys/api.php"; 
-var url = "http://localhost/The-Superkeys/backend/api.php";
+var url = "/CompareIt/The-Superkeys/api.php"; 
+// var url = "http://localhost/The-Superkeys/backend/api.php";
 
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('signupForm').addEventListener('submit', function (event) {

@@ -8,7 +8,7 @@
                         <ul>
                             <li id="signup-link"><a href="signup.php"><img src="img/SignUp.png" alt="Order"
                                         class="icon"> <br> Sign Up</a></li>
-                            <li id="logout-link" style="display: none;"> <a href="products.php"><img src="img/Login.png" alt="Login" class="icon"> <br> Logout</a></li>
+                            <li id="logout-link" style="display: none;"> <a href="products.php"><img src="img/Logout.png" alt="Login" class="icon"> <br> Logout</a></li>
                             
                             <li id="login-link"><a href="login.php"><img src="img/Login.png" alt="Login" class="icon">
                                     <br> Login</a></li>
@@ -36,19 +36,27 @@
     const signupLink = document.getElementById("signup-link");
     const logoutLink = document.getElementById("logout-link");
     const dashboardLink = document.getElementById("dashboard-link");
+    const wishlistLink = document.getElementById("wishlist-link");
+    const dashboardAnchor = dashboardLink.querySelector("a");
 
     if (isLoggedIn) {
         loginLink.style.display = "none";
         signupLink.style.display = "none";
-        logoutLink.style.display = "block";
-
-       
+        logoutLink.style.display = "block";       
         dashboardLink.style.display = "block";
 
         logoutLink.addEventListener("click", function () {
             localStorage.clear();
             window.location.href = "products.php";
         });
+
+        if (userType === "Manager") {
+            wishlistLink.style.display = "none";
+            dashboardAnchor.setAttribute("href", "managerDashboard.php");
+        } else {
+            dashboardAnchor.setAttribute("href", "customerDashboard.php");
+        }
+
     } else {
         loginLink.style.display = "block";
         signupLink.style.display = "block";

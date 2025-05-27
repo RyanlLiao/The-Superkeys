@@ -72,9 +72,8 @@
       <div class="product-details">
         <h1></h1>
         <p></p>
-        <p></p>
+        <p></p>   
       </div>
-
       <div class="category-table">
         <h2>Price Comparison</h2>
         <table>

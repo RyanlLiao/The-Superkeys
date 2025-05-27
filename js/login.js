@@ -46,6 +46,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
 
                     localStorage.setItem("api_key", data.apikey);
                     localStorage.setItem("user_type", data.user_type);
+                    // localStorage.setItem()
 
                     alert("Successfully logged in! Welcome");
                     window.location.href = "products.php";

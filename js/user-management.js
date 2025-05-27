@@ -1,6 +1,6 @@
 class UserManager {
     constructor() {
-        this.apiEndpoint = 'api.php';
+        this.apiEndpoint = "/CompareIt/The-Superkeys/api.php";
         this.apikey = this.getApiKey();
         this.users = [];
         this.init();
@@ -8,14 +8,14 @@ class UserManager {
 
         getApiKey() {
         // Try to get API key from sessionStorage first
-        let storedKey = sessionStorage.getItem('userApiKey');
+        let storedKey = localStorage.getItem('userApiKey');
         if (storedKey) {
             console.log('Using sessionStorage userApiKey:', storedKey);
             return storedKey;
         }
         
         // Try sessionStorage with alternative key
-        storedKey = sessionStorage.getItem('apikey');
+        storedKey = localStorage.getItem('apikey');
         if (storedKey) {
             console.log('Using sessionStorage apikey:', storedKey);
             return storedKey;
