@@ -63,10 +63,9 @@ class API
             "Count",
             "GetAllUsers",
             "DeleteUser",
-            "CreateCategory", 
-            "UpdateCategory", 
-            "RemoveCategory",
-            "GetCategories"
+            "CreateCategory",
+            "UpdateCategory",
+            "RemoveCategory"
         ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
@@ -322,7 +321,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing User ID", null);
 
                 return $this->deleteUser($user_id);
-             case "CreateCategory":
+            case "CreateCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
@@ -341,7 +340,7 @@ class API
                     $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
                     $query .= "`$field` $datatype, ";
                 }
-                
+
                 $query .= "PRIMARY KEY (`product_id`), 
                     CONSTRAINT `fk_{$categoryName}_product` FOREIGN KEY (`product_id`) REFERENCES `Product`(`product_id`) 
                     ON DELETE CASCADE 
@@ -397,7 +396,7 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error updating category: " . $this->connection->error, null);
                 }
-                // break;
+                break;
             case "RemoveCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
@@ -414,61 +413,6 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error removing category: " . $this->connection->error, null);
                 }
-            case "GetCategories":
-                $apikey = $data['apikey'];
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
-
-                // 1. Get all category arrays from Product table
-                $query = "SELECT Category FROM Product";
-                $result = $this->connection->query($query);
-                $categories = [];
-                if ($result) {
-                    while ($row = $result->fetch_assoc()) {
-                        $cat = $row['Category'];
-                        if ($cat === null || $cat === "") continue;
-                        //have to decode as JSON array apparently?
-                        $decoded = json_decode($cat, true);
-                        if (is_array($decoded) && isset($decoded[0])) {
-                            $first = trim($decoded[0]);
-                            if ($first !== "" && !in_array($first, $categories)) {
-                                $categories[] = $first;
-                            }
-                        }
-                    }
-                }
-
-                $existingTables = [];
-                if (!empty($categories)) {
-                    $tableQuery = "SHOW TABLES";
-                    $tableResult = $this->connection->query($tableQuery);
-                    $allTables = [];
-                    if ($tableResult) {
-                        while ($row = $tableResult->fetch_array()) {
-                            $allTables[] = $row[0];
-                        }
-                    }
-                    $existingTables = array_values(array_intersect($categories, $allTables));
-                }
-
-                // 3. For each existing table, fetch its columns
-                $categoriesWithAttributes = [];
-                foreach ($existingTables as $table) {
-                    $colQuery = "SHOW COLUMNS FROM `$table`";
-                    $colResult = $this->connection->query($colQuery);
-                    $attributes = [];
-                    if ($colResult) {
-                        while ($colRow = $colResult->fetch_assoc()) {
-                            $attributes[] = $colRow['Field'];
-                        }
-                    }
-                    $categoriesWithAttributes[] = [
-                        "category" => $table,
-                        "attributes" => $attributes
-                    ];
-                }
-
-                return $this->response("HTTP/1.1 200 OK", "success", "", $categoriesWithAttributes);
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
@@ -621,6 +565,8 @@ class API
 
     private function getWhitelist($type)
     {
+        $allowed = [];
+
         if ($type == "product") {
             $allowed = [
                 "product_id",
@@ -635,9 +581,7 @@ class API
                 "price_min",
                 "price_max",
             ];
-        }
-
-        if ($type == "count") {
+        } else if ($type == "count") {
             $allowed = [
                 "Users",
                 "Products",
@@ -738,7 +682,7 @@ class API
 
     private function getProduct($pid)
     {
-        $query = "SELECT * FROM Product NATURAL JOIN Sold_by WHERE product_id = ?";
+        $query = "SELECT * FROM getProducts_View WHERE product_id = ?";
         $statement = $this->connection->prepare($query);
         $statement->bind_param("s", $pid);
 
@@ -794,11 +738,11 @@ class API
 
         if ($category === "Audio_Visual_Equipment") {
             $placeholders .= ",?,?";
-            $vartypes .= "ids,";
+            $vartypes .= "ids";
             $column .= "product_id,kHz,resolution";
-        } else if ($category === 'Electronic_Accessoried') {
+        } else if ($category === "Electronic_Accessories") {
             $placeholders .= ",?,?";
-            $vartypes .= "iii";
+            $vartypes .= "iss";
             $column .= "product_id,accessory_type,compatibility";
         } else if ($category === "Computing_Devices") {
             $placeholders .= ",?,?,?";
@@ -876,46 +820,170 @@ class API
         return $result;
     }
 
+    // private function count($data)
+    // {
+    //     // echo "COUNTING...";
+    //     $type = $data['count_type'];
+    //     $allowed = $this->getWhitelist($type);
+    //     //var_dump($allowed);
+
+    //     if (isset($data['count'])){
+    //         $type = array_intersect($allowed, [$data["count"]]);
+    //       //  echo "here";
+    //         $type = $type[0];
+    //     }
+    //     //var_dump($type);
+    //     if (empty($type))
+    //         return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+
+    //     $table = "";
+
+        
+    //     switch ($type) {
+    //         case "Users":
+    //             $table = "Person";
+    //             break;
+
+    //         case "Products":
+    //             $table = "Product";
+
+    //             break;
+    //         case "Reviews":
+    //             $table = "Review";
+    //             break;
+
+    //         case "Rating":
+    //           //  echo "here rating";
+    //             $query = "SELECT CASE 
+    //             WHEN rating < 1 THEN '0-1' 
+    //             WHEN rating < 2 THEN '1-2'
+    //             WHEN rating < 3 THEN '2-3'
+    //             WHEN rating < 4 THEN '3-4' 
+    //             WHEN rating < 5 THEN '4-5'
+    //             ELSE '5'
+                
+    //             END AS rating_range,
+    //             COUNT(*) as count
+                
+    //             FROM Review
+    //             GROUP BY rating_range
+    //             ORDER BY rating_range;";
+
+    //             $statement = $this->connection->prepare($query);
+    //             if(!$statement)
+    //                 return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$this->connection->error}", null);
+    //             if (!$statement->execute())
+    //                 return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+    //             $result = $statement->get_result();
+    //             $result = $result->fetch_all(MYSQLI_ASSOC);
+
+    //            // var_dump($result);
+
+    //             return $result;
+
+    //     }
+    //     ;
+
+    //     $query = "SELECT  Count(*) as count FROM $table";
+    //     $statement = $this->connection->prepare($query);
+    //     //var_dump($query);
+    //     if (!$statement->execute())
+    //         return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+    //     $result = $statement->get_result();
+    //     $result = $result->fetch_assoc();
+
+    //     // var_dump($result);
+    //     return (int)$result["count"];
+    // }
+
     private function count($data)
     {
-        // echo "COUNTING...";
-        $type = $data['count_type'];
-        $allowed = $this->getWhitelist($type);
-        //var_dump($allowed);
+        $whitelist_type = $data['count_type'];
+        $allowed_values = $this->getWhitelist($whitelist_type);
 
-        $type = array_intersect($allowed, [$data["count"]]);
-        // var_dump($type);
-        if (empty($type))
-            return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+        $type_to_count = null; 
+
+        if (isset($data['count'])) {
+            $intersection = array_intersect($allowed_values, [$data["count"]]);
+            if (!empty($intersection)) {
+                $type_to_count = reset($intersection); 
+            }
+        }
+
+        if (empty($type_to_count)) {
+            echo $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type specified: " . htmlspecialchars($data['count'] ?? 'NULL'), null);
+            return;
+        }
 
         $table = "";
-
-        switch ($type[0]) {
+        
+        switch ($type_to_count) {
             case "Users":
                 $table = "Person";
                 break;
-
             case "Products":
                 $table = "Product";
                 break;
             case "Reviews":
                 $table = "Review";
                 break;
-        }
-        ;
+            case "Rating":
+                $query = "SELECT CASE 
+                WHEN rating < 1 THEN '0-1' 
+                WHEN rating < 2 THEN '1-2'
+                WHEN rating < 3 THEN '2-3'
+                WHEN rating < 4 THEN '3-4' 
+                WHEN rating < 5 THEN '4-5'
+                ELSE '5'
+                END AS rating_range,
+                COUNT(*) as count
+                FROM Review
+                GROUP BY rating_range
+                ORDER BY rating_range;";
 
-        $query = "SELECT Count(*) as count FROM $table";
+                $statement = $this->connection->prepare($query);
+                if(!$statement) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing rating query: {$this->connection->error}", null);
+                    return;
+                }
+                if (!$statement->execute()) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing rating query: {$statement->error}", null);
+                    return;
+                }
+                $result = $statement->get_result();
+                $rating_data = $result->fetch_all(MYSQLI_ASSOC);
+                $statement->close();
+                return $rating_data;
+
+        }
+
+        $query = "SELECT Count(*) as count FROM `$table`"; 
         $statement = $this->connection->prepare($query);
-        // var_dump($query);
-        if (!$statement->execute())
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+        
+        if (!$statement) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing count query for $table: {$this->connection->error}", null);
+            return;
+        }
+        if (!$statement->execute()) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing count query for $table: {$statement->error}", null);
+            return;
+        }
 
         $result = $statement->get_result();
-        $result = $result->fetch_assoc();
+        $row = $result->fetch_assoc();
+        $statement->close();
 
-        // var_dump($result);
-        return $result["count"];
+        if ($row === null || !isset($row['count'])) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
+            return;
+        }
+        
+
+        return (int)$row["count"];
     }
+
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
@@ -1082,58 +1150,6 @@ class API
             $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
         $pstmt->close();
-
-    //    var_dump($userID);
-        // Check if user_id exists in User table
-        $query = 'SELECT user_id FROM User WHERE id = ?';
-        // var_dump($query);
-
-        $pstmt = $this->connection->prepare($query);
-        if (!$pstmt) {
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
-        }
-        $pstmt->bind_param('i', $userID);
-        $pstmt->execute();
-        $result = $pstmt->get_result();
-        $result = $result->fetch_assoc();
-        // var_dump($result);
-
-        // $pstmt->store_result();
-        // if ($pstmt->num_rows == 0) {
-        //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
-        // }
-        // echo "binding\n";
-       // $pstmt->bind_result($rID);
-        
-       // var_dump($rID);
-        $pstmt->close();
-
-
-    //    var_dump($userID);
-        // Check if user_id exists in User table
-        $query = 'SELECT user_id FROM User WHERE id = ?';
-        // var_dump($query);
-
-        $pstmt = $this->connection->prepare($query);
-        if (!$pstmt) {
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
-        }
-        $pstmt->bind_param('i', $userID);
-        $pstmt->execute();
-        $result = $pstmt->get_result();
-        $result = $result->fetch_assoc();
-        // var_dump($result);
-
-        // $pstmt->store_result();
-        // if ($pstmt->num_rows == 0) {
-        //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
-        // }
-        // echo "binding\n";
-       // $pstmt->bind_result($rID);
-        
-       // var_dump($rID);
-        $pstmt->close();
-
         //check if product id exists
         $query = 'SELECT product_id FROM Product WHERE product_id = ?';
         $pstmt = $this->connection->prepare($query);
@@ -1153,8 +1169,7 @@ class API
         if (!$pstmt) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         }
-        $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
-        $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
+        $pstmt->bind_param('iisss', $pid, $userID, $date, $rating, $comment);
         $pstmt->execute();
         if ($pstmt->affected_rows == 0) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
