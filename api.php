@@ -414,66 +414,139 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error removing category: " . $this->connection->error, null);
                 }
+            // case "GetCategories":
+            //     $apikey = $data['apikey'];
+            //     if (!$this->userCheck($apikey))
+            //         return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+
+            //     // 1. Get all category arrays from Product table
+            //     $query = "SELECT Category FROM Product";
+            //     $result = $this->connection->query($query);
+            //     $categories = [];
+            //     if ($result) {
+            //         while ($row = $result->fetch_assoc()) {
+            //             $cat = $row['Category'];
+            //             if ($cat === null || $cat === "") continue;
+            //             //have to decode as JSON array apparently?
+            //             $decoded = json_decode($cat, true);
+            //             if (is_array($decoded) && isset($decoded[0])) {
+            //                 $first = trim($decoded[0]);
+            //                 if ($first !== "" && !in_array($first, $categories)) {
+            //                     $categories[] = $first;
+            //                 }
+            //             }
+            //         }
+            //     }
+
+            //     $existingTables = [];
+            //     if (!empty($categories)) {
+            //         $tableQuery = "SHOW TABLES";
+            //         $tableResult = $this->connection->query($tableQuery);
+            //         $allTables = [];
+            //         if ($tableResult) {
+            //             while ($row = $tableResult->fetch_array()) {
+            //                 $allTables[] = $row[0];
+            //             }
+            //         }
+            //         $existingTables = array_values(array_intersect($categories, $allTables));
+            //     }
+
+            //     // 3. For each existing table, fetch its columns
+            //     $categoriesWithAttributes = [];
+            //     foreach ($existingTables as $table) {
+            //         $colQuery = "SHOW COLUMNS FROM `$table`";
+            //         $colResult = $this->connection->query($colQuery);
+            //         $attributes = [];
+            //         if ($colResult) {
+            //             while ($colRow = $colResult->fetch_assoc()) {
+            //                 $attributes[] = $colRow['Field'];
+            //             }
+            //         }
+            //         $categoriesWithAttributes[] = [
+            //             "category" => $table,
+            //             "attributes" => $attributes
+            //         ];
+            //     }
+
+            //     return $this->response("HTTP/1.1 200 OK", "success", "", $categoriesWithAttributes);
+
             case "GetCategories":
-                $apikey = $data['apikey'];
-                if (!$this->userCheck($apikey))
-                    return $this->response("HTTP/1.1 400 Bad Request", "error", "This is NOT A MANAGER ID", null);
+                 $apikey = $data['apikey'];
+                    if (!$this->checkApikey($apikey))
+                        return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
-                // 1. Get all category arrays from Product table
-                $query = "SELECT Category FROM Product";
-                $result = $this->connection->query($query);
-                $categories = [];
-                if ($result) {
-                    while ($row = $result->fetch_assoc()) {
-                        $cat = $row['Category'];
-                        if ($cat === null || $cat === "") continue;
-                        //have to decode as JSON array apparently?
-                        $decoded = json_decode($cat, true);
-                        if (is_array($decoded) && isset($decoded[0])) {
-                            $first = trim($decoded[0]);
-                            if ($first !== "" && !in_array($first, $categories)) {
-                                $categories[] = $first;
-                            }
-                        }
-                    }
-                }
-
-                $existingTables = [];
-                if (!empty($categories)) {
-                    $tableQuery = "SHOW TABLES";
-                    $tableResult = $this->connection->query($tableQuery);
-                    $allTables = [];
-                    if ($tableResult) {
-                        while ($row = $tableResult->fetch_array()) {
-                            $allTables[] = $row[0];
-                        }
-                    }
-                    $existingTables = array_values(array_intersect($categories, $allTables));
-                }
-
-                // 3. For each existing table, fetch its columns
-                $categoriesWithAttributes = [];
-                foreach ($existingTables as $table) {
-                    $colQuery = "SHOW COLUMNS FROM `$table`";
-                    $colResult = $this->connection->query($colQuery);
-                    $attributes = [];
-                    if ($colResult) {
-                        while ($colRow = $colResult->fetch_assoc()) {
-                            $attributes[] = $colRow['Field'];
-                        }
-                    }
-                    $categoriesWithAttributes[] = [
-                        "category" => $table,
-                        "attributes" => $attributes
-                    ];
-                }
-
-                return $this->response("HTTP/1.1 200 OK", "success", "", $categoriesWithAttributes);
+                    return $this->getCategories();
+        
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
 
     }
+
+    private function getCategories()
+{
+    try {
+        
+        $query = "SHOW TABLES";
+        $statement = $this->connection->prepare($query);
+        
+        if (!$statement->execute()) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        
+        $result = $statement->get_result();
+        $allTables = [];
+        
+        while ($row = $result->fetch_row()) {   
+            $allTables[] = $row[0];
+        }
+        
+        
+        $systemTables = [
+            'Person', 'User', 'Manager', 'Product', 'Retailer', 'Sold_by', 
+            'Price_History', 'Review', 'Wishlist', 'Product_Price_History',
+            'ProductInfo', 'UserWishlist', 'getProducts', 'getProducts_View'
+        ];
+        
+        
+        $categoryTables = [];
+        foreach ($allTables as $table) {
+            if (!in_array($table, $systemTables)) {
+                $categoryTables[] = $table;
+            }
+        }
+        
+        
+        $categories = [];
+        
+        foreach ($categoryTables as $table) {
+            
+            $columnQuery = "SHOW COLUMNS FROM $table";
+            $columnStatement = $this->connection->prepare($columnQuery);
+            
+            if ($columnStatement->execute()) {
+                $columnResult = $columnStatement->get_result();
+                $attributes = [];
+                
+                while ($columnRow = $columnResult->fetch_assoc()) {
+                    $attributes[] = $columnRow['Field'];
+                }
+                
+                $categories[] = [
+                    'category' => $table,
+                    'attributes' => $attributes,
+                    'field_count' => count($attributes) - 1, 
+                    'status' => count($attributes) > 1 ? 'Active' : 'Empty'
+                ];
+            }
+        }
+        
+        return $this->response("HTTP/1.1 200 OK", "success", "", $categories);
+        
+    } catch (Exception $e) {
+        return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error retrieving categories: " . $e->getMessage(), null);
+    }
+}
 
     //this function will check if the passed in paramater is an array of allowed values
     private function arrayCheck($param, $allowed)
@@ -876,46 +949,94 @@ class API
         return $result;
     }
 
+
     private function count($data)
     {
-        // echo "COUNTING...";
-        $type = $data['count_type'];
-        $allowed = $this->getWhitelist($type);
-        //var_dump($allowed);
+        $whitelist_type = $data['count_type']; // e.g., "count"
+        $allowed_values = $this->getWhitelist($whitelist_type);
 
-        $type = array_intersect($allowed, [$data["count"]]);
-        // var_dump($type);
-        if (empty($type))
-            return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
+        $type_to_count = null; 
+
+        if (isset($data['count'])) {
+            $intersection = array_intersect($allowed_values, [$data["count"]]);
+            if (!empty($intersection)) {
+                $type_to_count = reset($intersection); 
+            }
+        }
+
+        if (empty($type_to_count)) {
+            echo $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type specified: " . htmlspecialchars($data['count'] ?? 'NULL'), null);
+            return;
+        }
 
         $table = "";
-
-        switch ($type[0]) {
+        
+        // Use $type_to_count in your switch
+        switch ($type_to_count) {
             case "Users":
                 $table = "Person";
                 break;
-
             case "Products":
                 $table = "Product";
                 break;
             case "Reviews":
                 $table = "Review";
                 break;
-        }
-        ;
+            case "Rating":
+                $query = "SELECT CASE 
+                WHEN rating < 1 THEN '0-1' 
+                WHEN rating < 2 THEN '1-2'
+                WHEN rating < 3 THEN '2-3'
+                WHEN rating < 4 THEN '3-4' 
+                WHEN rating < 5 THEN '4-5'
+                ELSE '5'
+                END AS rating_range,
+                COUNT(*) as count
+                FROM Review
+                GROUP BY rating_range
+                ORDER BY rating_range;";
 
-        $query = "SELECT Count(*) as count FROM $table";
+                $statement = $this->connection->prepare($query);
+                if(!$statement) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing rating query: {$this->connection->error}", null);
+                    return;
+                }
+                if (!$statement->execute()) {
+                    echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing rating query: {$statement->error}", null);
+                    return;
+                }
+                $result = $statement->get_result();
+                $rating_data = $result->fetch_all(MYSQLI_ASSOC);
+                $statement->close();
+                return $rating_data;
+
+        }
+
+        $query = "SELECT Count(*) as count FROM $table"; 
         $statement = $this->connection->prepare($query);
-        // var_dump($query);
-        if (!$statement->execute())
-            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+        
+        if (!$statement) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error preparing count query for $table: {$this->connection->error}", null);
+            return;
+        }
+        if (!$statement->execute()) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error executing count query for $table: {$statement->error}", null);
+            return;
+        }
 
         $result = $statement->get_result();
-        $result = $result->fetch_assoc();
+        $row = $result->fetch_assoc();
+        $statement->close();
 
-        // var_dump($result);
-        return $result["count"];
+        if ($row === null || !isset($row['count'])) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
+            return;
+        }
+        
+
+        return (int)$row["count"];
     }
+
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
