@@ -1,4 +1,4 @@
-var url = "/CompareIt/The-Superkeys/api.php";
+var url = "http://localhost/The-Superkeys/backend/api.php";
 
 document.getElementById('loginForm').addEventListener('submit', function (event) {
     event.preventDefault();
