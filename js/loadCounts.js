@@ -1,6 +1,7 @@
 async function loadCounts() {
   try {
     const countTypes = ['Users', 'Products', 'Reviews'];
+    // const countTypes = ['Reviews'];
     const responseData = {};
 
     const apiKey = "1a8eeccd5b43834a18870560a229cc4a6862ef492e808536a65055ca46eaba4f";
@@ -36,11 +37,18 @@ async function loadCounts() {
 
       const apiResult = await response.json();
 
-      if (apiResult.result === 'success' && typeof apiResult.data !== 'undefined') {
-        responseData[typeToCount] = apiResult.data;
-      } else {
-        console.warn(`Could not retrieve count for ${typeToCount}: ${apiResult.message || 'API returned success but data is missing.'}`);
+      if (apiResult.status === 'success' && typeof apiResult.data !== 'undefined') {
+        // If data might be 0, and you want to display 0, this is fine.
+        // If data could be null from the API and you want to treat it as 0:
+        responseData[typeToCount] = (apiResult.data === null) ? 0 : Number(apiResult.data);
+      } else if (apiResult.status === 'success' && (apiResult.data === null || typeof apiResult.data === 'undefined')) {
+        // This handles cases where API reports success but data is explicitly null or undefined
+        console.warn(`Count for ${typeToCount} was explicitly null or undefined by API, treating as 0. API Message: ${apiResult.message || ''}`);
         responseData[typeToCount] = 0;
+      }
+      else {
+        console.warn(`Could not retrieve count for ${typeToCount}: ${apiResult.message || 'API issue or non-success status.'}`);
+        responseData[typeToCount] = 'N/A'; // Or 0
       }
     }
 
