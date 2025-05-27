@@ -1060,7 +1060,8 @@ class API
         // Join Review with Person to get username
         $query = "SELECT Review.*, Person.username 
             FROM Review 
-            JOIN Person ON Review.user_id = Person.id 
+            JOIN User ON Review.user_id = User.user_id 
+            JOIN Person ON User.id = Person.id 
             WHERE 1=1";
         $params = [];
         $types = "";
@@ -1201,7 +1202,7 @@ class API
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
         }
         $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
-        $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
+        // $pstmt->bind_param('iisss', $pid, $result['user_id'], $date, $rating, $comment);
         $pstmt->execute();
         if ($pstmt->affected_rows == 0) {
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
