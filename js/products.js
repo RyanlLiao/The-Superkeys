@@ -34,10 +34,12 @@ function displayProducts(data) {
             + '<div class="product" '
             + 'data-brand="' + product.retailer_name + '" data-category="' + category[0] + '" data-type="' + category[1] + '" data-id="' + product.product_id + '">'
             + '<a href="view.php?id=' + product.product_id + '"><img src="' + mainImage + '"alt="' + product.product_name + '" class="productImg"></a>'
-            + '<a href="view.php?id=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
+             + '<div class="product-info">' 
+             + '<a href="view.php?id=' + product.product_id + '"><h2 id="product_name">' + product.product_name + '</h2> </a>'
             + '<h3 id="product_price">R' + product.price + '</h3>'
             + '<a href="view.php?id=' + product.product_id + '"> <p>Tap for more</p> </a>'
             + '<button class="add" ">Add to Wishlist</button>'
+            + '</div>'
             + '</div>';
         //edit add to wishlist functionality
         container.innerHTML += card;
@@ -140,6 +142,11 @@ function fetchProducts(callback) {
 
 function addWishlist(button) {
     var apiKey = localStorage.getItem("api_key");
+    var userType = localStorage.getItem("user_type");
+    if(userType != "User"){
+        alert ("Only logged in Users have a wishlist. Please log in as a user.");
+        return;
+    }
     if (apiKey == null) {
         alert("Please log in.");
         window.location.href = "login.php";

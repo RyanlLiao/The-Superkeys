@@ -38,7 +38,6 @@
             <label for="type">User Type:</label>
             <select id="type" name="type" required>
             <option value="User">User</option>
-            <option value="Manager">Manager</option>
             </select><br>
 
             <button type="submit" id="submitBtn">Sign Up</button>

@@ -10,17 +10,17 @@ body {
 }
 
 .wishlist-wrapper {
-    background-color: #001f3f;
+    /* background-color: #efefef; */
     max-width: 1200px;
-    margin: 40px auto;
+    margin: 20px auto;
     padding: 20px;
     border-radius: 12px;
 }
 
 h1 {
     font-size: 2.5rem;
-    margin-bottom: 40px;
-    color: #ffffff;
+    margin-bottom: 20px;
+    color: black;
 }
 
 .wishlist-actions {
@@ -47,23 +47,27 @@ h1 {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
-    padding: 20px;
+    padding: 20px;   
 }
+
+
 
 .wishlist-item {
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    align-items: center;
+
 }
 
 .wishlist-image {
     position: relative;
     width: 100%;
-    padding-top: 100%; /* Creates a square aspect ratio */
+    padding-top: 100%;
+    /* Creates a square aspect ratio */
 }
 
 .wishlist-image img {
@@ -72,8 +76,9 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain; /* This ensures the image fits without being cut */
-    background: #f8f9fa; /* Light background for images */
+    object-fit: contain;
+    /* This ensures the image fits without being cut */
+    /*background: #f8f9fa;  Light background for images */
 }
 
 .wishlist-details {
@@ -145,7 +150,7 @@ h1 {
     cursor: pointer;
     font-weight: bold;
     font-size: 0.9rem;
-    transition: background 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out;
 }
 
 .remove-btn:hover {
@@ -164,15 +169,15 @@ h1 {
 }
 
 .refresh-btn {
-    background-color: #89caff;
-    color: #0b1a2d;
+    background-color: #003459;
+    color: white;
     border: none;
     padding: 12px 24px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     font-size: 1rem;
-    transition: background 0.2s ease-in-out;
+    transition: background-colour 0.2s ease-in-out;
 }
 
 .refresh-btn:hover {
@@ -227,7 +232,7 @@ h1 {
         align-items: center;
     }
 
-     .wishlist-grid {
+    .wishlist-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 15px;
         padding: 15px;

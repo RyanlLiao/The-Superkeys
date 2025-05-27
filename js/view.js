@@ -262,6 +262,11 @@ window.onload = function () {
 
 function addWishlist() {
     var apiKey = localStorage.getItem("api_key");
+    var userType = localStorage.getItem("user_type");
+    if(userType != "User"){
+        alert ("Only Users have a wishlist.");
+        return;
+    }
     if (apiKey == null) {
         alert("Please log in.");
         window.location.href = "login.php";
