@@ -37,18 +37,19 @@
             </select>
 
             <select name="brand" onchange="brandFilter(value)">
-                <option value="">All Brands</option>
-                <option value="samsung">Samsung</option>
-                <option value="apple">Apple</option>
-                <option value="sony">Sony</option>
+                <option value="">All Retailers</option>
             </select>
 
             <select name="filter-by-price"  onchange="priceFilter(value)">
-                <option value="">Range</option>
-                <option value="100-200">0-5000</option>
-                <option value="200-300">5000-10000</option>
-                <option value="300-400">10000-20000</option>
-                <option value="300-400">20000-20000</option>
+                <option value="">Price Range (R)</option>
+                <option value="0-2500">0-2500</option>
+                <option value="2500-5000">2500-5000</option>
+                <option value="5000-10000">5000-10000</option>
+                <option value="10000-20000">10000-20000</option>
+                <option value="20000-30000">20000-30000</option>
+                <option value="30000-40000">30000-40000</option>
+                <option value="40000-50000">40000-50000</option>
+                <option value="50000-60000">50000-60000</option>
             </select>
 
             
