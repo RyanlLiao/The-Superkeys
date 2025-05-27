@@ -37,6 +37,7 @@ function submitReview() {
 
     if (!apiKey || userType != "User") {
         alert("You must be a logged in user to submit a review.");
+        window.location.href = "login.php";
         // return;
     }
     var id = getProductIdFromURL();
@@ -65,6 +66,9 @@ function submitReview() {
                     const response = JSON.parse(xhr.responseText);
                     console.log("Parsed response:", response);
                     alert("Review submitted successfully!");
+
+                    window.location.href = "view.php?id=" + id;
+
                 } catch (e) {
                     console.error("Invalid JSON response:", e);
                     // alert("Error: Could not parse server response.");
@@ -125,7 +129,7 @@ function loadReviews(id) {
 
                     var reviewHTML = ''
                         + '<div class="review-text">'
-                        + '<strong>'+ review.username + '</strong>: ' + review.comments
+                        + '<strong>' + review.username + '</strong>: ' + review.comments
                         + '</div>'
                         + '<div class="review-meta">'
                         + '<span class="brand">Date: ' + review.date + '</span>'
