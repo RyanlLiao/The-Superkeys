@@ -63,8 +63,8 @@ class API
             "Count",
             "GetAllUsers",
             "DeleteUser",
-            "CreateCategory", 
-            "UpdateCategory", 
+            "CreateCategory",
+            "UpdateCategory",
             "RemoveCategory",
             "GetCategories"
         ];        //might add admin
@@ -322,7 +322,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing User ID", null);
 
                 return $this->deleteUser($user_id);
-             case "CreateCategory":
+            case "CreateCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
@@ -341,7 +341,7 @@ class API
                     $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
                     $query .= "`$field` $datatype, ";
                 }
-                
+
                 $query .= "PRIMARY KEY (`product_id`), 
                     CONSTRAINT `fk_{$categoryName}_product` FOREIGN KEY (`product_id`) REFERENCES `Product`(`product_id`) 
                     ON DELETE CASCADE 
@@ -397,7 +397,7 @@ class API
                 } else {
                     return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error updating category: " . $this->connection->error, null);
                 }
-                // break;
+            // break;
             case "RemoveCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
@@ -826,11 +826,11 @@ class API
     //this will add products to the table - only manager apikeys will be valid
     private function addProducts($product)
     {
-
-
         $images = is_array($product['images']) ? implode(',', $product['images']) : $product['images'];
+        $images = json_encode($images);
+       // $images = [$images];
         $category = is_array($product['category']) ? implode(',', $product['category']) : $product['category'];
-
+        $category = json_encode($category);
         $query = "INSERT INTO Product (product_name,description,availability,images,Category) VALUES(?,?,?,?,?)";
         $statement = $this->connection->prepare($query);
 
@@ -867,9 +867,9 @@ class API
 
         if ($category === "Audio_Visual_Equipment") {
             $placeholders .= ",?,?";
-            $vartypes .= "ids,";
+            $vartypes .= "ids";
             $column .= "product_id,kHz,resolution";
-        } else if ($category === 'Electronic_Accessoried') {
+        } else if ($category === 'Electronic_Accessories') {
             $placeholders .= ",?,?";
             $vartypes .= "iii";
             $column .= "product_id,accessory_type,compatibility";
@@ -882,7 +882,7 @@ class API
         $query = "INSERT INTO $category ($column) VALUES($placeholders)";
         $statement = $this->connection->prepare($query);
 
-        if ($category === 'Audio_Visual_Equipment' || $category === 'Electronic_Accessoried')
+        if ($category === 'Audio_Visual_Equipment' || $category === 'Electronic_Accessories')
             $statement->bind_param($vartypes, $added, $values[0], $values[1]);
         else if ($category === "Computing_Devices")
             $statement->bind_param($vartypes, $added, $values[0], $values[1], $values[2]);
@@ -1037,6 +1037,17 @@ class API
         return (int)$row["count"];
     }
 
+        $row = $result->fetch_assoc();
+        $statement->close();
+
+        if ($row === null || !isset($row['count'])) {
+            echo $this->response("HTTP/1.1 500 Internal Server Error", "error", "Could not fetch count for $table", null);
+            return;
+        }
+
+
+        return (int) $row["count"];
+    }
     //this adds a new retailer - only manager apikeys will be accepted
     private function addRetailer($apikey, $rName)
     {
@@ -1205,6 +1216,33 @@ class API
         }
         $pstmt->close();
 
+        //    var_dump($userID);
+        // Check if user_id exists in User table
+        $query = 'SELECT id FROM User WHERE user_id = ?';
+        // var_dump($query);
+
+        $pstmt = $this->connection->prepare($query);
+        if (!$pstmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Database error", null);
+        }
+        $pstmt->bind_param('i', $userID);
+        $pstmt->execute();
+        $result = $pstmt->get_result();
+        $result = $result->fetch_assoc();
+        // var_dump($result);
+
+        // $pstmt->store_result();
+        // if ($pstmt->num_rows == 0) {
+        //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
+        // }
+        // echo "binding\n";
+        // $pstmt->bind_result($rID);
+
+        // var_dump($rID);
+        $pstmt->close();
+
+
+        //    var_dump($userID);
         // Check if user_id exists in User table
         $query = 'SELECT user_id FROM User WHERE id = ?';
         // var_dump($query);
@@ -1224,9 +1262,9 @@ class API
         //     return $this->response("HTTP/1.1 401 Unauthorized", "error", "This is NOT a User ID", null);
         // }
         // echo "binding\n";
-       // $pstmt->bind_result($rID);
-        
-       // var_dump($rID);
+        // $pstmt->bind_result($rID);
+
+        // var_dump($rID);
         $pstmt->close();
 
         //check if product id exists
