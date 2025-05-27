@@ -62,7 +62,10 @@ class API
             "UpdatePrice",
             "Count",
             "GetAllUsers",
-            "DeleteUser"
+            "DeleteUser",
+            "CreateCategory", 
+            "UpdateCategory", 
+            "RemoveCategory"
         ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
 
@@ -151,6 +154,8 @@ class API
             case "AddRetailer":
                 $apikey = $data['apikey'];
                 $rName = $data['name'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($rName == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer Name", null);
@@ -159,6 +164,8 @@ class API
             case "RemoveRetailer":
                 $apikey = $data['apikey'];
                 $rid = $data['rid'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($rid == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Retailer ID", null);
@@ -218,6 +225,8 @@ class API
                 $retailer = $data['retailer'];
                 $product = $data['product'];
                 $date = isset($data['date']) && !empty($data['date']) ? date('Y-m-d H:i:s', strtotime($data['date'])) : date('Y-m-d H:i:s');
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
 
                 if ($price == "" || $retailer == "" || $product == "" || $date == "")
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing Post Parameter", null);
@@ -312,6 +321,98 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing User ID", null);
 
                 return $this->deleteUser($user_id);
+             case "CreateCategory":
+                $apikey = $data['apikey'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+                $categoryName = $data['category_name'];
+                $fields = $data['fields'] ?? [];
+                $datatypes = $data['datatypes'] ?? [];
+                if (empty($categoryName) || !is_string($categoryName)) {
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
+                }
+
+                $query = "CREATE TABLE IF NOT EXISTS `$categoryName` (
+                    `product_id` INT NOT NULL,";
+
+                foreach ($fields as $index => $field) {
+                    $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
+                    $query .= "`$field` $datatype, ";
+                }
+                
+                $query .= "PRIMARY KEY (`product_id`), 
+                    CONSTRAINT `fk_{$categoryName}_product` FOREIGN KEY (`product_id`) REFERENCES `Product`(`product_id`) 
+                    ON DELETE CASCADE 
+                    ON UPDATE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+                if ($this->connection->query($query) === TRUE) {
+                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category created successfully");
+                } else {
+                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error creating category: " . $this->connection->error, null);
+                }
+            case "UpdateCategory":
+                $apikey = $data['apikey'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+                $categoryName = $data['category_name'];
+                $fields = $data['fields'] ?? [];
+                $datatypes = $data['datatypes'] ?? [];
+                if (empty($categoryName) || !is_string($categoryName)) {
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
+                }
+
+                // Get current columns in the table
+                $columns = [];
+                $colQuery = "SHOW COLUMNS FROM `$categoryName`";
+                $colResult = $this->connection->query($colQuery);
+                if ($colResult) {
+                    while ($row = $colResult->fetch_assoc()) {
+                        $columns[] = $row['Field'];
+                    }
+                }
+
+                $alterStatements = [];
+                foreach ($fields as $index => $field) {
+                    if (in_array($field, $columns)) {
+                        // If field exists, drop it
+                        $alterStatements[] = "DROP COLUMN `$field`";
+                    } else {
+                        // If field does not exist, add it
+                        $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
+                        $alterStatements[] = "ADD COLUMN `$field` $datatype";
+                    }
+                }
+
+                if (empty($alterStatements)) {
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "No valid fields to alter", null);
+                }
+
+                $query = "ALTER TABLE `$categoryName` " . implode(", ", $alterStatements);
+                if ($this->connection->query($query) === TRUE) {
+                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category updated successfully");
+                } else {
+                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error updating category: " . $this->connection->error, null);
+                }
+                break;
+            case "RemoveCategory":
+                $apikey = $data['apikey'];
+                if (!$this->userCheck($apikey))
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
+
+                $categoryName = $data['category_name'];
+                if (empty($categoryName) || !is_string($categoryName)) {
+                    return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Category Name", null);
+                }
+
+                $query = "DROP TABLE IF EXISTS `$categoryName`";
+                if ($this->connection->query($query) === TRUE) {
+                    return $this->response("HTTP/1.1 200 OK", "success", "", "Category removed successfully");
+                } else {
+                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error removing category: " . $this->connection->error, null);
+                }
             default:
                 return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid type", null);
         }
@@ -853,7 +954,13 @@ class API
             return $this->response("HTTP/1.1 404 NOT FOUND", "error", "Invalid API key", null);
         }
 
-        $query = "SELECT Review.*, Person.username FROM Review JOIN Person ON Review.user_id = Person.id WHERE 1=1";
+        // Join Review with Person to get username
+        $query = "SELECT Review.*, Person.username 
+            FROM Review 
+            JOIN Person ON Review.user_id = Person.id 
+            WHERE 1=1";
+        $params = [];
+        $types = "";
 
         if ($pid !== null && $pid !== "") {
             $query .= " AND product_id = ?";
@@ -1196,14 +1303,20 @@ class API
 
     private function getAllUsers()
     {
-        $query = "SELECT * FROM Person JOIN User ON Person.id = User.id";
+        $query = "SELECT Person.* FROM Person JOIN User ON Person.id = User.id";
         $pstmt = $this->connection->prepare($query);
+        if (!$pstmt) {
+            return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't prepare statement", null);
+        }
 
-        if (!$pstmt->execute())
+        if (!$pstmt->execute()) {
+            $pstmt->close();
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Couldn't retrieve users", null);
+        }
 
         $result = $pstmt->get_result();
         $users = $result->fetch_all(MYSQLI_ASSOC);
+        $pstmt->close();
 
         return $this->response("HTTP/1.1 200 OK", "success", "", $users);
     }
