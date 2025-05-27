@@ -8,9 +8,13 @@ body {
     color: #ffffff;
 }
 
-main {
-    margin-top: 150px;
-    min-height: calc(100vh - 150px);
+.headerrr {
+    background-color: #0B1957;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 3px solid #F7F7F3;
 }
 
 header {
@@ -22,22 +26,58 @@ header {
     position: fixed;
     width: 100%;
     top: 0;
+    left: 0;
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
 }
 
-header img.logo {
-    height: 40px;
+
+main {
+    margin-top: 120px; 
+    padding: 20px;
+    min-height: calc(100vh - 120px);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .manage-products-wrapper {
-    background-color: #d0d5ff;
-    color: rgb(100, 103, 195);
+    background-color: #97bbed;
+    color: rgb(128, 200, 236);
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-    width: 800px;
-    margin: 40px auto 40px auto;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto; /* Remove top margin since main has margin-top */
+    box-sizing: border-box;
+    margin-top: 100px;
+}
+
+.manage-users-wrapper {
+    background-color: #97bbed;
+    color: rgb(128, 200, 236);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    margin-top: 120px;
+}
+
+/* Update the responsive styles */
+@media (max-width: 768px) {
+    main {
+        margin-top: 100px; /* Increased from 60px for mobile */
+        padding: 15px;
+    }
+
+    .manage-products-wrapper {
+        width: 95%;
+        padding: 15px;
+    }
 }
 
 h1 {
@@ -52,7 +92,7 @@ h1 {
 
 label {
     font-weight: 500;
-    color: rgb(100, 103, 195);
+    color: rgb(100, 132, 195);
 }
 
 input[type="text"] {
@@ -177,7 +217,7 @@ input[type="text"] {
 
 .product-count {
     margin-bottom: 15px;
-    color: rgb(100, 103, 195);
+    color: rgb(100, 135, 195);
     font-size: 14px;
     font-weight: 500;
 }
@@ -304,7 +344,7 @@ input[type="text"] {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid rgb(100, 103, 195);
+    border-bottom: 1px solid rgb(150, 184, 248);
 }
 
 .modal-title {
@@ -333,7 +373,7 @@ input[type="text"] {
 .form-group label {
     display: block;
     margin-bottom: 5px;
-    color: rgb(100, 103, 195);
+    color: rgb(100, 130, 195);
     font-weight: 600;
     font-size: 14px;
 }
@@ -375,7 +415,7 @@ input[type="text"] {
 .category-fields {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid rgb(100, 103, 195);
+    border-top: 1px solid rgb(100, 133, 195);
 }
 
 .category-fields h3 {
@@ -391,7 +431,7 @@ input[type="text"] {
 
 @media (max-width: 768px) {
     main {
-        margin-top: 120px;
+        margin-top: 100px; /* Increased for better mobile spacing */
     }
     
     .manage-products-wrapper {

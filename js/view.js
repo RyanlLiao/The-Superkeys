@@ -1,4 +1,6 @@
 var a_key = '1a8eeccd5b43834a18870560a229cc4a6862ef492e808536a65055ca46eaba4f';
+//require.config({path:"backend/.env"})
+
 var imageList = [];
 
 function getProductIdFromURL() {
@@ -35,6 +37,7 @@ function submitReview() {
 
     if (!apiKey || userType != "User") {
         alert("You must be a logged in user to submit a review.");
+        window.location.href = "login.php";
         // return;
     }
     var id = getProductIdFromURL();
@@ -63,6 +66,9 @@ function submitReview() {
                     const response = JSON.parse(xhr.responseText);
                     console.log("Parsed response:", response);
                     alert("Review submitted successfully!");
+
+                    window.location.href = "view.php?id=" + id;
+
                 } catch (e) {
                     console.error("Invalid JSON response:", e);
                     // alert("Error: Could not parse server response.");
