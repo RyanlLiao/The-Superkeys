@@ -63,8 +63,8 @@ class API
             "Count",
             "GetAllUsers",
             "DeleteUser",
-            "CreateCategory", 
-            "UpdateCategory", 
+            "CreateCategory",
+            "UpdateCategory",
             "RemoveCategory"
         ];        //might add admin
         $valid = $this->arrayCheck($object["type"], $types);
@@ -321,7 +321,7 @@ class API
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Missing User ID", null);
 
                 return $this->deleteUser($user_id);
-             case "CreateCategory":
+            case "CreateCategory":
                 $apikey = $data['apikey'];
                 if (!$this->userCheck($apikey))
                     return $this->response("HTTP/1.1 400 Bad Request", "error", "Invalid Credentials", null);
@@ -340,7 +340,7 @@ class API
                     $datatype = isset($datatypes[$index]) ? $datatypes[$index] : 'VARCHAR(255)';
                     $query .= "`$field` $datatype, ";
                 }
-                
+
                 $query .= "PRIMARY KEY (`product_id`), 
                     CONSTRAINT `fk_{$categoryName}_product` FOREIGN KEY (`product_id`) REFERENCES `Product`(`product_id`) 
                     ON DELETE CASCADE 
@@ -565,6 +565,8 @@ class API
 
     private function getWhitelist($type)
     {
+        $allowed = [];
+
         if ($type == "product") {
             $allowed = [
                 "product_id",
@@ -579,9 +581,7 @@ class API
                 "price_min",
                 "price_max",
             ];
-        }
-
-        if ($type == "count") {
+        } else if ($type == "count") {
             $allowed = [
                 "Users",
                 "Products",
@@ -827,30 +827,66 @@ class API
         $allowed = $this->getWhitelist($type);
         //var_dump($allowed);
 
-        $type = array_intersect($allowed, [$data["count"]]);
+        if (isset($data['count'])){
+            $type = array_intersect($allowed, [$data["count"]]);
+            echo "here";
+            $type = $type[0];
+        }
         // var_dump($type);
         if (empty($type))
             return $this->response("HTTP/1.1 404 Not Found", "error", "Invalid Count Type", null);
 
         $table = "";
 
-        switch ($type[0]) {
+        switch ($type) {
             case "Users":
                 $table = "Person";
                 break;
 
             case "Products":
                 $table = "Product";
+
                 break;
             case "Reviews":
                 $table = "Review";
                 break;
+
+            case "Rating":
+              //  echo "here rating";
+                $query = "SELECT CASE 
+                WHEN rating < 1 THEN '0-1' 
+                WHEN rating < 2 THEN '1-2'
+                WHEN rating < 3 THEN '2-3'
+                WHEN rating < 4 THEN '3-4' 
+                WHEN rating < 5 THEN '4-5'
+                ELSE '5'
+                
+                END AS rating_range,
+                COUNT(*) as count
+                
+                FROM Review
+                GROUP BY rating_range
+                ORDER BY rating_range;";
+
+                $statement = $this->connection->prepare($query);
+                if(!$statement)
+                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$this->connection->error}", null);
+                if (!$statement->execute())
+                    return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
+
+                $result = $statement->get_result();
+                $result = $result->fetch_all(MYSQLI_ASSOC);
+
+                var_dump($result);
+
+                return $result;
+
         }
         ;
 
-        $query = "SELECT Count(*) as count FROM $table";
+        $query = "SELECT  Count(*) as count FROM $table";
         $statement = $this->connection->prepare($query);
-        // var_dump($query);
+        var_dump($query);
         if (!$statement->execute())
             return $this->response("HTTP/1.1 500 Internal Server Error", "error", "Error: {$statement->error}", null);
 
