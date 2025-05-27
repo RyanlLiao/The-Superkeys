@@ -31,6 +31,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     req.setRequestHeader("Content-Type", "application/json");
 
     req.onreadystatechange = function () {
+         console.log("Raw response:", req.responseText);
         if (req.readyState === 4) {
             if (req.status === 200) {
                 console.log("Raw response:", req.responseText);

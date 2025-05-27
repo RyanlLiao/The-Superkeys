@@ -1,0 +1,17 @@
+{
+    "name": "ryanl/the-superkeys",
+    "autoload": {
+        "psr-4": {
+            "Ryanl\\TheSuperkeys\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "RyanlLiao",
+            "email": "ryanliao78@gmail.com"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

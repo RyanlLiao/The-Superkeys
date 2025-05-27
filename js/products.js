@@ -133,7 +133,11 @@ function fetchProducts(callback) {
 }
 
 function addWishlist(button) {
-    //console.log("ADDINGG.....");
+    var apiKey=localStorage.getItem("api_key");
+    if(apiKey == null){
+        alert("Please log in.");
+        window.location.href = "login.php";
+    }
 
     //var button = event.currentTarget;
     var pid = button.closest(".product").getAttribute("data-id");
@@ -149,12 +153,13 @@ function addWishlist(button) {
     });
     //need to redirect is they aren't logged in
     wish.onload = () => {
+        console.log(wish.responseText);
         if (wish.readyState == 4 && wish.status == 200) {
             var response = JSON.parse(wish.responseText);
             alert(response.data);
         }
         else
-            console.error(wish.responseText.message);
+            console.error(wish.responseText);
     }
 
     wish.send(body);
