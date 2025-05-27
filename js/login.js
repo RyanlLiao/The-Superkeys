@@ -1,4 +1,4 @@
-var url = "http://localhost/The-Superkeys/backend/api.php";
+var url = "/CompareIt/The-Superkeys/api.php";
 
 document.getElementById('loginForm').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -41,6 +41,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
 
                     localStorage.setItem("api_key", data.apikey);
                     localStorage.setItem("user_type", data.user_type);
+                    localStorage.setItem("logged_in", "true");
 
                     alert("Successfully logged in! Welcome");
                     window.location.href = "products.php";
