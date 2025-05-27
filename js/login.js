@@ -21,7 +21,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     }
 
     var formData = {
-        type: "Login",          //might be capital L
+        type: "Login",  
         "email": email,
         "hashed_password": password
     };
@@ -39,9 +39,11 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
                 if (json.status === "success") {
                     const data = json.data;
 
+                    console.log("Login success:", json);
+                    console.log("data.user-type:", data["user-type"]);
+
                     localStorage.setItem("api_key", data.apikey);
-                    localStorage.setItem("user_type", data.user_type);
-                    localStorage.setItem("logged_in", "true");
+                    localStorage.setItem("user_type", data["user-type"]);
 
                     alert("Successfully logged in! Welcome");
                     window.location.href = "products.php";

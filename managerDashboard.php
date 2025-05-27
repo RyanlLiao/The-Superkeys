@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graphManager.js" defer></script>
+    <script src="js/loadCounts.js"></script>
 </head>
 <body>
 
@@ -42,9 +43,12 @@
     <div class="card">
         <h2>System Stats</h2>
         <ul>
-            <li>Total Products: 150</li>
+            <!-- <li>Total Products: 150</li>
             <li>Total Users: 80</li>
-            <li>Total Reviews: 420</li>
+            <li>Total Reviews: 420</li> -->
+                <li>Total Products: <span id="count-products">Loading...</span></li>
+                <li>Total Users: <span id="count-users">Loading...</span></li>
+                <li>Total Reviews: <span id="count-reviews">Loading...</span></li>
         </ul>
     </div>
 
@@ -63,10 +67,12 @@
         <p>Chart or detailed insights can go here.</p>
     </div>
 
-    <div>
+
+</div>
+
+    <div class="card full-width" id="chart-container">
         <canvas id="myChart"></canvas>
     </div>
-</div>
 
 </body>
 </html>

@@ -1,17 +1,15 @@
 class WishlistManager {
     constructor() {
-        this.apiEndpoint = "/CompareIt/The-Superkeys/api.php"; 
-        this.apikey = this.getApiKey();
+        this.apiEndpoint = "api.php"; 
+        this.apikey = localStorage.getItem('api_key') || null;
         this.init();
     }
 
-    getApiKey() {
-        return localStorage.getItem('apikey') || sessionStorage.getItem('apikey');
-    }
-
+    
     
     async init() {
-        if (!this.apikey) {
+        if (!this.apikey) 
+        {
             this.showError('Please log in to view your wishlist');
             return;
         }

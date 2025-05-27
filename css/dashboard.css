@@ -87,6 +87,13 @@ body {
     transform: translateY(-2px);
 }
 
+canvas#myChart {
+    width: 100% !important;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
 @media screen and (max-width: 768px) {
     .dashboard-content {
         flex-direction: column;

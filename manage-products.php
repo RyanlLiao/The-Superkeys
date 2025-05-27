@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Products</title>
     <link rel="stylesheet" href="css/delete-user.css">
+    
 </head>
+<header>
+    <?php include 'header.php'; ?>
+</header>
 
 <body>
-    <?php include 'header.php'; ?>
+    
 
     <main class="manage-products-wrapper">
         <h1>Manage & Delete Products</h1>
